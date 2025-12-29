@@ -1,165 +1,238 @@
 :root{
-  --bg:#0b1020;
-  --card:#111936;
-  --card2:#0f1731;
-  --text:#eaf0ff;
-  --muted:#a9b5df;
-  --line:rgba(255,255,255,.10);
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e5e7eb;
 
-  --ok:#29d3a1;
-  --warn:#ffcc66;
-  --danger:#ff5c7a;
+  --primary:#2563eb;   /* 出勤 */
+  --danger:#ef4444;    /* 退勤 */
+  --ok:#16a34a;        /* 勤務中 */
+  --warn:#f59e0b;      /* 未出勤 */
 
-  --btn:#2a63ff;
-  --btn2:#1c2a57;
+  --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
-*{box-sizing:border-box}
+*{ box-sizing:border-box; }
 body{
   margin:0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: radial-gradient(1200px 700px at 20% 0%, #17235c 0%, var(--bg) 55%);
-  color:var(--text);
+  background: linear-gradient(180deg, #ffffff 0%, var(--bg) 45%);
+  color: var(--text);
 }
-.container{max-width:860px;margin:0 auto;padding:18px}
-h1{margin:6px 0 16px;font-size:18px;letter-spacing:.02em;color:var(--muted)}
+.container{ max-width: 860px; margin:0 auto; padding: 18px; }
+h1{ margin: 6px 0 16px; font-size: 18px; color: var(--muted); letter-spacing: .02em; }
 
 .card{
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 16px;
   margin: 14px 0;
-  box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  box-shadow: var(--shadow);
 }
-.card h2{
-  margin:0 0 12px;
-  font-size:16px;
-  color:var(--text);
-}
+.card h2{ margin: 0 0 12px; font-size: 16px; }
 
 .card.hero{
-  background: linear-gradient(180deg, rgba(42,99,255,.18), rgba(255,255,255,.03));
-  border-color: rgba(42,99,255,.35);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.10);
 }
 
-/* --- 上段ヘッダ（勤務日 + 状態バッジ） --- */
+/* ヘッダ：勤務日 + 状態 */
 .headerLine{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  margin-bottom:10px;
+  margin-bottom: 10px;
 }
 .workDate{
-  font-size:14px;
-  color:var(--muted);
-}
-.badge{
-  font-size:12px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid var(--line);
-  background: rgba(255,255,255,.05);
+  font-size: 13px;
   color: var(--muted);
 }
-.badge.ok{ border-color: rgba(41,211,161,.35); color: #bff6e7; background: rgba(41,211,161,.12); }
-.badge.warn{ border-color: rgba(255,204,102,.35); color: #ffe3b0; background: rgba(255,204,102,.12); }
-.badge.danger{ border-color: rgba(255,92,122,.35); color: #ffc0cc; background: rgba(255,92,122,.12); }
 
-/* --- KPI（出勤/退勤/実働/差分）をカードっぽく --- */
+/* 状態バッジ */
+.badge{
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 700;
+}
+.badge.ok{
+  border-color: rgba(22,163,74,.25);
+  background: rgba(22,163,74,.08);
+  color: #166534;
+}
+.badge.warn{
+  border-color: rgba(245,158,11,.25);
+  background: rgba(245,158,11,.10);
+  color: #92400e;
+}
+.badge.danger{
+  border-color: rgba(239,68,68,.25);
+  background: rgba(239,68,68,.10);
+  color: #991b1b;
+}
+
+/* KPIカード */
 .kpis{
   display:grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
-  gap:10px;
-  margin-top:10px;
+  gap: 10px;
+  margin-top: 10px;
 }
 .kpi{
-  background: rgba(0,0,0,.18);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
 }
 .kpi .label{
-  font-size:12px;
-  color:var(--muted);
-  margin-bottom:6px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
 }
 .kpi .value{
-  font-size:22px;
-  font-weight:700;
-  letter-spacing:.02em;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .02em;
 }
 .kpi .sub{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:6px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
 }
 
-/* --- ボタンを主役に --- */
+/* ボタン：主役 */
 .actions{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:12px;
-  margin-top:14px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
 }
 .btn{
-  border:0;
-  border-radius:16px;
-  padding:14px 14px;
-  font-size:16px;
-  font-weight:800;
-  letter-spacing:.02em;
-  cursor:pointer;
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 14px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  cursor: pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  box-shadow: 0 14px 24px rgba(0,0,0,.35);
+  gap: 10px;
+  box-shadow: 0 12px 18px rgba(15,23,42,.12);
   transform: translateY(0);
-  transition: transform .06s ease, filter .2s ease, opacity .2s ease;
+  transition: transform .06s ease, opacity .2s ease, filter .2s ease;
 }
 .btn:active{ transform: translateY(1px); }
-
+.btn:disabled{
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(.15);
+  box-shadow: none;
+}
 .btnStart{
-  background: linear-gradient(180deg, #2a63ff 0%, #1f47d8 100%);
-  color:#fff;
+  background: linear-gradient(180deg, #3b82f6 0%, var(--primary) 100%);
+  color: #fff;
 }
 .btnEnd{
-  background: linear-gradient(180deg, #ff5c7a 0%, #d93b57 100%);
-  color:#fff;
-}
-.btn:disabled{
-  opacity:.42;
-  cursor:not-allowed;
-  filter: grayscale(.25);
-  box-shadow:none;
+  background: linear-gradient(180deg, #fb7185 0%, var(--danger) 100%);
+  color: #fff;
 }
 
-/* ボタン内の丸アイコン風 */
+/* ボタン内の丸アイコン */
 .dot{
-  width:10px;height:10px;border-radius:999px;
-  background: rgba(255,255,255,.9);
-  box-shadow: 0 0 0 4px rgba(255,255,255,.15);
+  width: 10px; height: 10px; border-radius: 999px;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.28);
 }
 
-/* hint */
 .hint{
-  margin:10px 2px 0;
+  margin: 10px 2px 0;
   color: var(--muted);
   min-height: 1.2em;
 }
 
-/* 月次テーブル */
-.tableWrap{ overflow:auto; margin-top:10px; border-radius:14px; border:1px solid var(--line); }
-table{ width:100%; border-collapse: collapse; background: rgba(0,0,0,.18); }
-th,td{ padding:10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; white-space:nowrap; }
-thead th{ position: sticky; top: 0; background: rgba(0,0,0,.28); color: var(--muted); font-weight:600; }
-tbody tr:hover{ background: rgba(255,255,255,.04); }
+/* 月次 */
+.tableWrap{
+  overflow:auto;
+  margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+table{ width: 100%; border-collapse: collapse; background: #fff; }
+th, td{ padding: 10px; border-bottom: 1px solid var(--line); text-align:left; white-space:nowrap; }
+thead th{
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 800;
+}
+tbody tr:hover{ background: #f8fafc; }
 
-/* レスポンシブ */
 @media (max-width: 520px){
   .kpis{ grid-template-columns: 1fr; }
   .actions{ grid-template-columns: 1fr; }
-  .kpi .value{ font-size:20px; }
+  .kpi .value{ font-size: 20px; }
 }
+
+/* 画面切替 */
+.view{ padding-bottom: 86px; } /* bottomNav分の余白 */
+.isHidden{ display:none; }
+
+/* Data側の簡易行 */
+.rowSimple{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.rowSimple:last-child{ border-bottom:0; }
+.muted{ color: var(--muted); font-size: 13px; }
+.strong{ font-weight: 900; }
+
+/* ボトムナビ */
+.bottomNav{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 70px;
+  background: rgba(255,255,255,.92);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  z-index: 999;
+}
+
+.tab{
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  cursor:pointer;
+  color: var(--muted);
+  font-weight: 800;
+}
+.tabIcon{ font-size: 18px; }
+.tabLabel{ font-size: 12px; letter-spacing: .02em; }
+
+.tab.active{
+  background: #f8fafc;
+  border-color: rgba(37,99,235,.20);
+  color: var(--text);
+  box-shadow: 0 8px 14px rgba(15,23,42,.08);
+}
+
+/* 端末によってはcontainerが見切れるので少し下に余白 */
+.container{ padding-bottom: 90px; }

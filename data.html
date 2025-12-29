@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Deosil - Data</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+
+    <main class="container">
+        <h1>Deosil</h1>
+
+        <section class="card">
+            <h2 id="dataTilte">Data</h2>
+
+            <div class="rowSimple">
+                <div class="muted">残業合計</div>
+                <div id="sumOverText" class="strong">--:--</div>
+            </div>
+            <div class="rowSimple">
+                <div class="muted">早上がり合計</div>
+                <div id="sumUnderText" class="strong">--:--</div>
+            </div>
+
+            <div class="tableWrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日付</th>
+                            <th>出勤</th>
+                            <th>退勤</th>
+                            <th>実働</th>
+                            <th>差分</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthTbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ボトムナビ -->
+        <nav class="bottomNav" aria-label="bottom navigation">
+            <a href="./index.html" class="tab">
+                <span class="tabIcon">🏠</span>
+                <span class="tabLabel">Home</span>
+            </a>
+            <a href="./data.html" class="tab active">
+                <span class="tabIcon">📄</span>
+                <span class="tabLabel">Data</span>
+            </a>
+        </nav>
+    </main>
+
+    <script src="./app.js"></script>
+    <script src="./data.js"></script>
+</body>
+
+</html>
