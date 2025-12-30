@@ -5,7 +5,7 @@
 (async function initData() {
     await window.App.init();
 
-    const titleEl = document.getElementById("dataTilte");
+    const titleEl = document.getElementById("dataTitle");
     const monthTbody = document.getElementById("monthTbody");
     const sumOverText = document.getElementById("sumOverText");
     const sumUnderText = document.getElementById("sumUnderText");
