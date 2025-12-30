@@ -232,7 +232,7 @@ tbody tr:hover{ background: #f8fafc; }
 
 .tab.active{
   background: #f8fafc;
-  border-color: rgba(37,99,235,.20);
+  border-color: rgb(37,99,235);
   color: var(--text);
   box-shadow: 0 8px 14px rgba(15,23,42,.08);
   text-decoration: none;
