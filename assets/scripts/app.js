@@ -38,6 +38,31 @@ function openDb() {
   });
 }
 
+async function tryUpsertToSupabase(session) {
+  const supabase = window.App.supabase;
+  if (!supabase) return;
+
+  const { data, auth } = await supabase.auth.getUser();
+  console.log("Supabase user:", auth?.user?.id);
+  const user = auth?.user;
+  if (!user) return;
+
+  const row = {
+    id: session.id,
+    user_id: user.id,
+    work_date: session.workDate,
+    start_at: session.startAt ? new Date(session.startAt).toISOString() : null,
+    end_at: session.endAt ? new Date(session.endAt).toISOString() : null,
+    state: session.state,
+  };
+
+  const { error } = await supabase
+    .from("sessions")
+    .upsert(row, { onConflict: "user_id,work_date" });
+
+  if (error) console.error("[Supabase] upsert failed:", error);
+}
+
 function tx(db, store, mode = "readonly") {
   return db.transaction(store, mode).objectStore(store);
 }
@@ -196,6 +221,8 @@ window.App = {
     const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
     await reqToPromise(store.put(session));
 
+    tryUpsertToSupabase(session);
+
     return { ok: true, session };
   },
 
@@ -208,6 +235,8 @@ window.App = {
 
     const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
     await reqToPromise(store.put(working));
+
+    tryUpsertToSupabase(working);
 
     return { ok: true, session: working };
   },
