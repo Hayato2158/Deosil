@@ -105,6 +105,14 @@ window.App = {
     if (window.App.db && window.App.testerId) return; // 多重初期化防止
     window.App.db = await openDb();
     window.App.testerId = await window.App.getOrCreateTesterId();
+
+    //supabase初期化
+    if (window.supabase && window.DEOSIL_ENV?.SUPABASE_URL && window.DEOSIL_ENV?.SUPABASE_ANON_KEY) {
+      this.supabase = window.supabase.createClient(
+        window.DEOSIL_ENV.SUPABASE_URL,
+        window.DEOSIL_ENV.SUPABASE_ANON_KEY
+      );
+    }
   },
 
   // meta
