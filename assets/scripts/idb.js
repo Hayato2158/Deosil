@@ -66,6 +66,12 @@
 
     // queries
     window.App.getWorkingSession = async function getWorkingSession() {
+        //supabaseを優先して確認
+        if (window.App.getWorkingSessionRemote) {
+            const remoteSession = await window.App.getWorkingSessionRemote();
+            if (remoteSession) return remoteSession;
+        }
+
         const store = tx(window.App.db, STORE_SESSIONS);
         const idx = store.index("byTesterState");
         const range = IDBKeyRange.only([window.App.testerId, "WORKING"]);
@@ -78,12 +84,24 @@
     };
 
     window.App.getSessionByDate = async function getSessionByDate(workDate) {
+        //supabaseを優先確認
+        if (window.App.getSessionByDateRemote) {
+            const remoteSession = await window.App.getSessionByDateRemote(workDate);
+            if (remoteSession) return remoteSession;
+        }
+
         const store = tx(window.App.db, STORE_SESSIONS);
         const idx = store.index("byTesterDate");
         return reqToPromise(idx.get([window.App.testerId, workDate]));
     };
 
     window.App.listSessionsInMonth = async function listSessionsInMonth(year, month1to12) {
+        //supabaseを優先確認
+        if (window.App.listSessionInMonthRemote) {
+            const remonteSession = await window.App.listSessionInMonthRemote(year, month1to12);
+            if (remonteSession) return remonteSession;
+        }
+
         const start = new Date(year, month1to12 - 1, 1);
         const end = new Date(year, month1to12, 1);
         const startMs = start.getTime();
