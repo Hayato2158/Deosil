@@ -5,7 +5,7 @@
 (() => {
     // ===== IndexedDB =====
     const DB_NAME = "time-helper";
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     const STORE_SESSIONS = "sessions";
     const STORE_META = "meta";
 
@@ -17,12 +17,13 @@
                 const db = req.result;
 
                 // sessions
-                if (!db.objectStoreNames.contains(STORE_SESSIONS)) {
-                    const s = db.createObjectStore(STORE_SESSIONS, { keyPath: "id" });
-                    s.createIndex("byTesterDate", ["testerId", "workDate"], { unique: true });
-                    s.createIndex("byTesterState", ["testerId", "state"], { unique: false });
-                    s.createIndex("byTesterStartAt", ["testerId", "startAt"], { unique: false });
+                if (db.objectStoreNames.contains(STORE_SESSIONS)) {
+                    db.deleteObjectStore(STORE_SESSIONS);
                 }
+                const s = db.createObjectStore(STORE_SESSIONS, { keyPath: "id" });
+                s.createIndex("byUserIdDate", ["userId", "workDate"], { unique: true });
+                s.createIndex("byUserIdState", ["userId", "state"], { unique: false });
+                s.createIndex("byUserIdStartAt", ["userId", "startAt"], { unique: false });
 
                 // meta
                 if (!db.objectStoreNames.contains(STORE_META)) {
@@ -53,16 +54,16 @@
     window.App.tx = tx;
     window.App.reqToPromise = reqToPromise;
 
-    // meta
-    window.App.getOrCreateTesterId = async function getOrCreateTesterId() {
-        const store = tx(window.App.db, STORE_META, "readwrite");
-        const existing = await reqToPromise(store.get("testerId"));
-        if (existing?.value) return existing.value;
+    // meta(後で消す)
+    // window.App.getOrCreateTesterId = async function getOrCreateTesterId() {
+    //     const store = tx(window.App.db, STORE_META, "readwrite");
+    //     const existing = await reqToPromise(store.get("testerId"));
+    //     if (existing?.value) return existing.value;
 
-        const id = window.App.uuid(); // core.js 側
-        await reqToPromise(store.put({ key: "testerId", value: id }));
-        return id;
-    };
+    //     const id = window.App.uuid(); // core.js 側
+    //     await reqToPromise(store.put({ key: "testerId", value: id }));
+    //     return id;
+    // };
 
     // queries
     window.App.getWorkingSession = async function getWorkingSession() {
@@ -73,8 +74,8 @@
         }
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byTesterState");
-        const range = IDBKeyRange.only([window.App.testerId, "WORKING"]);
+        const idx = store.index("byUserState");
+        const range = IDBKeyRange.only([window.App.userId, "WORKING"]);
         const cursorReq = idx.openCursor(range);
 
         return new Promise((resolve, reject) => {
@@ -91,8 +92,8 @@
         }
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byTesterDate");
-        return reqToPromise(idx.get([window.App.testerId, workDate]));
+        const idx = store.index("byUserDate");
+        return reqToPromise(idx.get([window.App.userId, workDate]));
     };
 
     window.App.listSessionsInMonth = async function listSessionsInMonth(year, month1to12) {
@@ -108,10 +109,10 @@
         const endMs = end.getTime();
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byTesterStartAt");
+        const idx = store.index("byUserStartAt");
         const range = IDBKeyRange.bound(
-            [window.App.testerId, startMs],
-            [window.App.testerId, endMs],
+            [window.App.userId, startMs],
+            [window.App.userId, endMs],
             false,
             true
         );
@@ -132,6 +133,10 @@
 
     // mutations（home.js が使う想定）
     window.App.createStartSession = async function createStartSession() {
+
+        //userId確認してnullならエラー
+        if (!window.App.userId) return { ok: false, message: "ユーザーIDが取得できません。再ログインしてください。" };
+
         const workDate = window.App.formatDate(new Date());
 
         const working = await window.App.getWorkingSession();
@@ -142,7 +147,7 @@
 
         const session = {
             id: window.App.uuid(),
-            testerId: window.App.testerId,
+            userId: window.App.userId,
             workDate,
             startAt: Date.now(),
             endAt: null,
@@ -159,6 +164,10 @@
     };
 
     window.App.closeWorkingSession = async function closeWorkingSession() {
+
+        //userId確認してnullならエラー
+        if (!window.App.userId) return { ok: false, message: "ユーザーIDが取得できません。再ログインしてください。" };
+
         const working = await window.App.getWorkingSession();
         if (!working) return { ok: false, message: "出勤が未記録です。" };
 

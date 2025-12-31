@@ -48,7 +48,7 @@
     // 状態
     window.App.supabase = window.App.supabase ?? null;
     window.App.db = window.App.db ?? null;
-    window.App.testerId = window.App.testerId ?? null;
+    window.App.userId = window.App.userId ?? null;
 
     // util を公開
     window.App.formatDate = formatDate;
@@ -64,10 +64,6 @@
             if (!window.App.openDb) throw new Error("openDb is not defined. Did you load idb.js before core.js?");
             window.App.db = await window.App.openDb();
         }
-        if (!window.App.testerId) {
-            if (!window.App.getOrCreateTesterId) throw new Error("getOrCreateTesterId is not defined. Did you load idb.js?");
-            window.App.testerId = await window.App.getOrCreateTesterId();
-        }
 
         // Supabase 初期化（1回だけ）
         if (!window.App.supabase) {
@@ -76,6 +72,12 @@
             if (url && anon && window.supabase) {
                 window.App.supabase = window.supabase.createClient(url, anon);
             }
+        }
+
+        if (window.App.supabase && window.App.userId) {
+            const { data: { session } } = await window.App.supabase.auth.getSession();
+            if (error) console.warn(error);
+            window.App.userId = session?.user?.id ?? null;
         }
     };
 
@@ -89,6 +91,7 @@
             if (!isLoginPage) location.href = "./login.html";
             return null;
         }
+        window.App.userId = user.id;
         return user;
     };
 })();
