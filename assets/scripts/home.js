@@ -1,7 +1,7 @@
 (async function initHome() {
     await window.App.init();
-    await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
-    const user = await window.App.getAuthedUser();
+    const user = await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
+    if (!user) return;
     const loginInfoEl = document.getElementById("loginInfo");
     if (loginInfoEl && user) loginInfoEl.textContent = `ログイン中: ${user.email ?? user.id}`;
 
@@ -48,11 +48,13 @@
         }
     }
 
+    let currentKind = "NONE";
+    let currentSession = null;
+    let currentDate = window.App.formatDate(new Date());
+    let isBusy = false;
+
     async function getTodayState() {
         const todayDate = window.App.formatDate(new Date());
-        const working = await window.App.getWorkingSession();
-        if (working) return { kind: "WORKING", todayDate, session: working };
-
         const todaySession = await window.App.getSessionByDate(todayDate);
         if (todaySession) {
             const kind = todaySession.state === "WORKING" ? "WORKING" : "DONE";
@@ -62,8 +64,7 @@
         return { kind: "NONE", todayDate, session: null };
     }
 
-    async function renderHome() {
-        const { kind, todayDate, session } = await getTodayState();
+    function renderFromState(kind, todayDate, session) {
         workDateEl.textContent = todayDate;
 
         if (kind === "NONE") {
@@ -74,9 +75,7 @@
             diffTextEl.textContent = "--";
             setButton("START");
             return;
-        }
-
-        if (kind === "WORKING") {
+        } else if (kind === "WORKING") {
             setBadge("勤務中", "ok");
             setButton("END");
         } else {
@@ -96,24 +95,47 @@
         else diffTextEl.textContent = "±0:00（定時）";
     }
 
+    async function renderHome() {
+        const { kind, todayDate, session } = await getTodayState();
+        currentKind = kind;
+        currentSession = session;
+        currentDate = todayDate;
+        renderFromState(kind, todayDate, session);
+    }
+
     // クリック時：状態に応じて出勤 or 退勤
     btnToggle.addEventListener("click", async () => {
+        //ロジック上の二重実行防止
+        if (isBusy) return;
+        isBusy = true;
+
         setHint("");
+        //ユーザの連打防止
+        btnToggle.disabled = true;
 
-        const { kind } = await getTodayState();
-
-        if (kind === "NONE") {
+        if (currentKind === "NONE") {
             const res = await window.App.createStartSession();
-            if (!res.ok) setHint(res.message);
-        } else if (kind === "WORKING") {
+            if (!res.ok) {
+                setHint(res.message);
+            } else {
+                currentKind = "WORKING";
+                currentSession = res.session;
+            }
+        } else if (currentKind === "WORKING") {
             const res = await window.App.closeWorkingSession();
-            if (!res.ok) setHint(res.message);
+            if (!res.ok) {
+                setHint(res.message);
+            } else {
+                currentKind = "DONE";
+                currentSession = res.session;
+            }
         } else {
             // DONEは押せない想定（disabled）だけど念のため
             setHint("本日はすでに退勤済みです。");
         }
 
-        await renderHome();
+        renderFromState(currentKind, currentDate, currentSession);
+        isBusy = false;
     });
 
     await renderHome();
