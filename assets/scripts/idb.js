@@ -67,68 +67,75 @@
 
     // queries
     window.App.getWorkingSession = async function getWorkingSession() {
-        //supabaseを優先確認
-        // if (window.App.getWorkingSessionRemote) {
-        //     const remoteSession = await window.App.getWorkingSessionRemote();
-        //     if (remoteSession) return remoteSession;
-        // }
+        // supabaseのdbを確認
+        if (!window.App.getWorkingSessionRemote) {
+            console.warn("getWorkingSessionRemote is not defined. Did you load sb.js?");
+            return null;
+        }
+        return await window.App.getWorkingSessionRemote();
 
-        const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserIdState");
-        const range = IDBKeyRange.only([window.App.userId, "WORKING"]);
-        const cursorReq = idx.openCursor(range);
 
-        return new Promise((resolve, reject) => {
-            cursorReq.onsuccess = () => resolve(cursorReq.result ? cursorReq.result.value : null);
-            cursorReq.onerror = () => reject(cursorReq.error);
-        });
+        //indexedDBのdbを確認
+        // const store = tx(window.App.db, STORE_SESSIONS);
+        // const idx = store.index("byUserIdState");
+        // const range = IDBKeyRange.only([window.App.userId, "WORKING"]);
+        // const cursorReq = idx.openCursor(range);
+
+        // return new Promise((resolve, reject) => {
+        //     cursorReq.onsuccess = () => resolve(cursorReq.result ? cursorReq.result.value : null);
+        //     cursorReq.onerror = () => reject(cursorReq.error);
+        // });
     };
 
     window.App.getSessionByDate = async function getSessionByDate(workDate) {
-        //supabaseを優先確認
-        // if (window.App.getSessionByDateRemote) {
-        //     const remoteSession = await window.App.getSessionByDateRemote(workDate);
-        //     if (remoteSession) return remoteSession;
-        // }
+        //supabaseのdbを確認
+        if (!window.App.getSessionByDateRemote) {
+            console.warn("getSessionByDateRemote is not defined. Did you load sb.js?");
+            return null;
+        }
+        return await window.App.getSessionByDateRemote(workDate);
 
-        const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserIdDate");
-        return reqToPromise(idx.get([window.App.userId, workDate]));
+        //indexedDBのdbを確認
+        // const store = tx(window.App.db, STORE_SESSIONS);
+        // const idx = store.index("byUserIdDate");
+        // return reqToPromise(idx.get([window.App.userId, workDate]));
     };
 
     window.App.listSessionsInMonth = async function listSessionsInMonth(year, month1to12) {
-        //supabaseを優先確認
-        // if (window.App.listSessionInMonthRemote) {
-        //     const remonteSession = await window.App.listSessionInMonthRemote(year, month1to12);
-        //     if (remonteSession) return remonteSession;
-        // }
+        //supabaseのdbを確認
+        if (!window.App.listSessionInMonthRemote) {
+            console.warn("listSessionInMonthRemote is not defined. Did you load sb.js?");
+            return null;
+        }
 
-        const start = new Date(year, month1to12 - 1, 1);
-        const end = new Date(year, month1to12, 1);
-        const startMs = start.getTime();
-        const endMs = end.getTime();
+        return await window.App.listSessionInMonthRemote(year, month1to12);
 
-        const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserIdStartAt");
-        const range = IDBKeyRange.bound(
-            [window.App.userId, startMs],
-            [window.App.userId, endMs],
-            false,
-            true
-        );
+        //indexedDBのdbを確認
+        // const start = new Date(year, month1to12 - 1, 1);
+        // const end = new Date(year, month1to12, 1);
+        // const startMs = start.getTime();
+        // const endMs = end.getTime();
+        // const store = tx(window.App.db, STORE_SESSIONS);
+        // const idx = store.index("byUserIdStartAt");
+        // const range = IDBKeyRange.bound(
+        //     [window.App.userId, startMs],
+        //     [window.App.userId, endMs],
+        //     false,
+        //     true
+        // );
 
-        const items = [];
-        const req = idx.openCursor(range);
+        // const items = [];
+        // const req = idx.openCursor(range);
 
-        return new Promise((resolve, reject) => {
-            req.onsuccess = () => {
-                const cur = req.result;
-                if (!cur) return resolve(items);
-                items.push(cur.value);
-                cur.continue();
-            };
-            req.onerror = () => reject(req.error);
-        });
+        // return new Promise((resolve, reject) => {
+        //     req.onsuccess = () => {
+        //         const cur = req.result;
+        //         if (!cur) return resolve(items);
+        //         items.push(cur.value);
+        //         cur.continue();
+        //     };
+        //     req.onerror = () => reject(req.error);
+        // });
     };
 
     // mutations（home.js が使う想定）
