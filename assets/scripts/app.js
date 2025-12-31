@@ -39,29 +39,48 @@ function openDb() {
 }
 
 async function tryUpsertToSupabase(session) {
+  console.log("[sync] tryUpsertToSupabase called");
+
   const supabase = window.App.supabase;
-  if (!supabase) return;
+  if (!supabase) {
+    console.log("[sync] Supabase client is not initialized");
+    return;
+  }
 
-  const { data, auth } = await supabase.auth.getUser();
-  console.log("Supabase user:", auth?.user?.id);
-  const user = auth?.user;
-  if (!user) return;
+  // ✅ セッションから user を取る（RLS の auth.uid() と確実に一致する）
+  const { data: sdata, error: serr } = await supabase.auth.getSession();
+  if (serr) {
+    console.warn("[sync] getSession error:", serr);
+    return;
+  }
+  const sbSession = sdata?.session;
+  console.log("[sync] session.user:", sbSession?.user?.id);
 
+  if (!sbSession?.user) {
+    console.log("[sync] ユーザーが認証されていません（sessionがnull）");
+    return;
+  }
+
+  // ✅ まずは id は送らない方が安全（DB default に任せる）
   const row = {
-    id: session.id,
-    user_id: user.id,
+    user_id: sbSession.user.id,
     work_date: session.workDate,
     start_at: session.startAt ? new Date(session.startAt).toISOString() : null,
     end_at: session.endAt ? new Date(session.endAt).toISOString() : null,
     state: session.state,
   };
 
-  const { error } = await supabase
+  const res = await supabase
     .from("sessions")
     .upsert(row, { onConflict: "user_id,work_date" });
 
-  if (error) console.error("[Supabase] upsert failed:", error);
+  console.log("[sync] upsert result:", res);
+
+  if (res.error) {
+    console.warn("[sync] upsert failed:", res.error);
+  }
 }
+
 
 function tx(db, store, mode = "readonly") {
   return db.transaction(store, mode).objectStore(store);
@@ -221,7 +240,7 @@ window.App = {
     const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
     await reqToPromise(store.put(session));
 
-    tryUpsertToSupabase(session);
+    await tryUpsertToSupabase(session);
 
     return { ok: true, session };
   },
