@@ -74,7 +74,7 @@
         }
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserState");
+        const idx = store.index("byUserIdState");
         const range = IDBKeyRange.only([window.App.userId, "WORKING"]);
         const cursorReq = idx.openCursor(range);
 
@@ -92,7 +92,7 @@
         }
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserDate");
+        const idx = store.index("byUserIdDate");
         return reqToPromise(idx.get([window.App.userId, workDate]));
     };
 
@@ -109,7 +109,7 @@
         const endMs = end.getTime();
 
         const store = tx(window.App.db, STORE_SESSIONS);
-        const idx = store.index("byUserStartAt");
+        const idx = store.index("byUserIdStartAt");
         const range = IDBKeyRange.bound(
             [window.App.userId, startMs],
             [window.App.userId, endMs],
