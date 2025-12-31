@@ -1,5 +1,9 @@
 (async function initHome() {
     await window.App.init();
+    await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
+    const user = await window.App.getAuthedUser();
+    const loginInfoEl = document.getElementById("loginInfo");
+    if (loginInfoEl && user) loginInfoEl.textContent = `ログイン中: ${user.email ?? user.id}`;
 
     // DOM
     const workDateEl = document.getElementById("workDate");

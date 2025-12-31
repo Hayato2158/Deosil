@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Deosil - Login</title>
+    <link rel="stylesheet" href="./assets/style/style.css" />
+</head>
+
+<body>
+    <main class="container">
+        <h1>Deosil</h1>
+
+        <section class="card hero">
+            <h2>ログイン</h2>
+
+            <div class="form">
+                <label class="field">
+                    <span class="muted">Email</span>
+                    <input id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                </label>
+
+                <label class="field">
+                    <span class="muted">Password</span>
+                    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="********" />
+                </label>
+
+                <p id="loginError" class="hint" style="color:#991b1b;"></p>
+
+                <div class="actions">
+                    <button id="btnLogin" class="btn btnStart" type="button">ログイン</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- supabase-js（すでに別で読み込んでるなら合わせてOK） -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- 例：window.DEOSIL_ENV を定義してる config.js（gitignore対象） -->
+    <script src="./assets/scripts/config.js"></script>
+
+    <script src="./assets/scripts/app.js"></script>
+    <script src="./assets/scripts/login.js"></script>
+</body>
+
+</html>

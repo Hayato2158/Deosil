@@ -4,6 +4,7 @@
 
 (async function initData() {
     await window.App.init();
+    await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
 
     const titleEl = document.getElementById("dataTitle");
     const monthTbody = document.getElementById("monthTbody");

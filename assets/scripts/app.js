@@ -47,7 +47,6 @@ async function tryUpsertToSupabase(session) {
     return;
   }
 
-  // ✅ セッションから user を取る（RLS の auth.uid() と確実に一致する）
   const { data: sdata, error: serr } = await supabase.auth.getSession();
   if (serr) {
     console.warn("[sync] getSession error:", serr);
@@ -61,7 +60,6 @@ async function tryUpsertToSupabase(session) {
     return;
   }
 
-  // ✅ まずは id は送らない方が安全（DB default に任せる）
   const row = {
     user_id: sbSession.user.id,
     work_date: session.workDate,
@@ -130,6 +128,7 @@ function calcWorkAndDiff(session) {
 
 // ===== 共通API（window.App に集約） =====
 window.App = {
+  supabase: null, // Supabase Client（initで初期化）
   db: null,
   testerId: null,
 
@@ -146,16 +145,20 @@ window.App = {
 
   // init（home.js / data.js から呼ぶ）
   async init() {
-    if (window.App.db && window.App.testerId) return; // 多重初期化防止
-    window.App.db = await openDb();
-    window.App.testerId = await window.App.getOrCreateTesterId();
+    if (!window.App.db) {
+      window.App.db = await openDb();
+    }
+    if (!window.App.testerId) {
+      window.App.testerId = await window.App.getOrCreateTesterId();
+    }
 
-    //supabase初期化
-    if (window.supabase && window.DEOSIL_ENV?.SUPABASE_URL && window.DEOSIL_ENV?.SUPABASE_ANON_KEY) {
-      this.supabase = window.supabase.createClient(
-        window.DEOSIL_ENV.SUPABASE_URL,
-        window.DEOSIL_ENV.SUPABASE_ANON_KEY
-      );
+    // Supabase 初期化（1回だけ）
+    if (!window.App.supabase) {
+      const url = window.DEOSIL_ENV?.SUPABASE_URL;
+      const anon = window.DEOSIL_ENV?.SUPABASE_ANON_KEY;
+      if (url && anon && window.supabase) {
+        window.App.supabase = window.supabase.createClient(url, anon);
+      }
     }
   },
 
@@ -240,7 +243,7 @@ window.App = {
     const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
     await reqToPromise(store.put(session));
 
-    await tryUpsertToSupabase(session);
+    tryUpsertToSupabase(session);
 
     return { ok: true, session };
   },
@@ -258,5 +261,21 @@ window.App = {
     tryUpsertToSupabase(working);
 
     return { ok: true, session: working };
+  },
+
+  async getAuthedUser() {
+    if (!window.App.supabase) return null;
+    const { data: { user } } = await window.App.supabase.auth.getUser();
+    return user ?? null;
+  },
+
+  async requireLogin() {
+    const user = await window.App.getAuthedUser();
+    if (!user) {
+      const isLoginPage = location.pathname.endsWith("/login.html");
+      if (!isLoginPage) location.href = "./login.html";
+      return null;
+    }
+    return user;
   },
 };
