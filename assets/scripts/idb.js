@@ -165,7 +165,9 @@
         await reqToPromise(store.put(session));
 
         // Supabase 同期（sb.js が提供）
-        if (window.App.tryUpsertToSupabase) window.App.tryUpsertToSupabase(session);
+        if (window.App.tryUpsertToSupabase) {
+            await window.App.tryUpsertToSupabase(session);
+        }
 
         return { ok: true, session };
     };
@@ -185,7 +187,9 @@
         await reqToPromise(store.put(working));
 
         // Supabase 同期（sb.js が提供）
-        if (window.App.tryUpsertToSupabase) window.App.tryUpsertToSupabase(working);
+        if (window.App.tryUpsertToSupabase) {
+            await window.App.tryUpsertToSupabase(working);
+        }
 
         return { ok: true, session: working };
     };

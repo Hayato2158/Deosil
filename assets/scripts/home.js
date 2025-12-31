@@ -54,7 +54,10 @@
         if (working) return { kind: "WORKING", todayDate, session: working };
 
         const todaySession = await window.App.getSessionByDate(todayDate);
-        if (todaySession) return { kind: "DONE", todayDate, session: todaySession };
+        if (todaySession) {
+            const kind = todaySession.state === "WORKING" ? "WORKING" : "DONE";
+            return { kind, todayDate, session: todaySession };
+        }
 
         return { kind: "NONE", todayDate, session: null };
     }
