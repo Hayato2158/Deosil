@@ -10,22 +10,34 @@
     const sumOverText = document.getElementById("sumOverText");
     const sumUnderText = document.getElementById("sumUnderText");
 
+    const btnPrev = document.getElementById("btnPrevMonth");
+    const btnNext = document.getElementById("btnNextMonth");
+
     // Dataページ以外なら何もしない
     if (!monthTbody || !sumOverText || !sumUnderText) return;
 
-    function renderTitle() {
+    let currentYear;
+    let currentMonth;
+
+    function setCurrentToNow() {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        if (titleEl) {
-            titleEl.textContent = `${year}年${String(month).padStart(2, "0")}月`;
-        }
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
     }
 
-    async function renderMonth() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
+    function shiftMonth(delta) {
+        const d = new Date(currentYear, currentMonth - 1 + delta, 1);
+        currentYear = d.getFullYear();
+        currentMonth = d.getMonth() + 1;
+    }
+
+    function renderTitle(year, month) {
+        if (!titleEl) return;
+        titleEl.textContent = `${year}年${String(month).padStart(2, "0")}月`;
+    }
+
+    async function renderMonth(year, month) {
+        renderTitle(year, month);
 
         const sessions = await window.App.listSessionsInMonth(year, month);
         sessions.sort((a, b) => a.workDate.localeCompare(b.workDate));
@@ -60,6 +72,19 @@
         sumUnderText.textContent = window.App.formatHM(underMin);
     }
 
-    renderTitle();
-    await renderMonth();
+    setCurrentToNow();
+    await renderMonth(currentYear, currentMonth);
+
+    if (btnPrev) {
+        btnPrev.addEventListener("click", async () => {
+            shiftMonth(-1);
+            await renderMonth(currentYear, currentMonth);
+        });
+    }
+    if (btnNext) {
+        btnNext.addEventListener("click", async () => {
+            shiftMonth(+1);
+            await renderMonth(currentYear, currentMonth);
+        });
+    }
 })();
