@@ -209,49 +209,108 @@ tbody tr:hover {
   background: #f8fafc;
 }
 
-.timeInput {
-  width: 5ch;
-  padding: 0;
+/* 時刻セル：固定サイズの箱（横幅を絶対に動かさない） */
+.timeCell {
+  width: 60px;
+  height: 34px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* span と input は“同じ見た目”に揃える */
+.timeInput,
+.timeText {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 表示時：旧の良さ（表に溶ける） */
+.timeText {
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text);
-  text-align: center;
+}
+
+/* 入力時：通常は透明、focusでだけ入力欄化 */
+.timeInput {
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
-  font: inherit;
-}
-.timeText {
-  display: inline-block;
-  width: 5ch;
-  color: var(--text);
+  padding: 0 8px;
   text-align: center;
+
+  -webkit-appearance: none;
+  appearance: none;
 }
+
 .timeInput:focus {
   outline: none;
   border-color: rgb(37, 99, 235);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-radius: 10px;
 }
+
+/* disabledの見た目（編集モード外） */
 .timeInput:disabled {
-  background: #e2e8f0;
   color: #64748b;
-  border-color: #cbd5e1;
 }
+
+/* 時刻アイコン消す */
 input[type="time"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
-.editBtn {
-  min-width: 56px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  font-weight: 700;
-  cursor: pointer;
+/* 操作列：固定（edit/saveで揺れない） */
+.actionCell {
+  width: 56px;
 }
-.editBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.actionBox {
+  width: 56px;
+  display: flex;
+  justify-content: center;
+}
+
+/* edit/save共通サイズ */
+.actionBtn {
+  width: 40px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.editBtn {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  color: #475569;
+}
+.editBtn:hover {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+.saveBtn {
+  background: rgba(37, 99, 235, 0.08); /* primary薄め */
+  border-color: rgba(37, 99, 235, 0.35);
+  color: rgb(37, 99, 235);
+}
+.saveBtn:hover {
+  background: rgba(37, 99, 235, 0.16);
 }
 
 @media (max-width: 520px) {
