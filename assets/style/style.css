@@ -193,9 +193,9 @@ table {
 }
 th,
 td {
-  padding: 10px;
+  padding: 5px;
   border-bottom: 1px solid var(--line);
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
 }
 thead th {
@@ -207,6 +207,51 @@ thead th {
 }
 tbody tr:hover {
   background: #f8fafc;
+}
+
+.timeInput {
+  width: 5ch;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+  box-shadow: none;
+  font: inherit;
+}
+.timeText {
+  display: inline-block;
+  width: 5ch;
+  color: var(--text);
+  text-align: center;
+}
+.timeInput:focus {
+  outline: none;
+  border-color: rgb(37, 99, 235);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  background: #fff;
+}
+.timeInput:disabled {
+  background: #e2e8f0;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.editBtn {
+  min-width: 56px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.editBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 520px) {
