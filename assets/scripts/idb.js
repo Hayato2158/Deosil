@@ -139,6 +139,20 @@
     };
 
     // mutations（home.js が使う想定）
+    window.App.saveSession = async function saveSession(session) {
+        if (!session?.id) return { ok: false, message: "セッションIDが不正です。" };
+
+        const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
+        await reqToPromise(store.put(session));
+
+        // Supabase 蜷梧悄・・b.js 縺梧署萓幢ｼ・
+        if (window.App.tryUpsertToSupabase) {
+            await window.App.tryUpsertToSupabase(session);
+        }
+
+        return { ok: true, session };
+    };
+
     window.App.createStartSession = async function createStartSession() {
 
         //userId確認してnullならエラー

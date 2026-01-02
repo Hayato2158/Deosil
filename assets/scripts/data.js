@@ -37,6 +37,18 @@
         titleEl.textContent = `${year}年${String(month).padStart(2, "0")}月`;
     }
 
+    function timeValueFromEpoch(epochMs) {
+        return epochMs ? window.App.formatTime(epochMs) : "";
+    }
+
+    function epochFromWorkDateTime(workDate, timeStr) {
+        if (!timeStr) return null;
+        const parts = timeStr.split(":").map((v) => Number(v));
+        if (parts.length < 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
+        const [y, m, d] = workDate.split("-").map((v) => Number(v));
+        return new Date(y, m - 1, d, parts[0], parts[1], 0, 0).getTime();
+    }
+
     async function renderMonth(year, month) {
         renderTitle(year, month);
 
@@ -58,15 +70,86 @@
                 else diffText = "±0:00";
             }
 
+            const startText = s.startAt ? window.App.formatTime(s.startAt) : "--:--";
+            const endText = s.endAt ? window.App.formatTime(s.endAt) : "--:--";
+
             const tr = document.createElement("tr");
             tr.innerHTML = `
         <td>${s.workDate}</td>
-        <td>${window.App.formatTime(s.startAt)}</td>
-        <td>${s.endAt ? window.App.formatTime(s.endAt) : "--:--"}</td>
+        <td>
+          <span class="timeText startAtText">${startText}</span>
+          <input class="timeInput startAtInput isHidden" type="time" value="${timeValueFromEpoch(s.startAt)}" disabled>
+        </td>
+        <td>
+          <span class="timeText endAtText">${endText}</span>
+          <input class="timeInput endAtInput isHidden" type="time" value="${timeValueFromEpoch(s.endAt)}" disabled>
+        </td>
         <td>${workMin == null ? "--:--" : window.App.formatHM(workMin)}</td>
         <td>${diffText}</td>
+        <td><button class="editBtn" type="button">edit</button></td>
       `;
             monthTbody.appendChild(tr);
+
+            const startTextEl = tr.querySelector(".startAtText");
+            const endTextEl = tr.querySelector(".endAtText");
+            const startInput = tr.querySelector(".startAtInput");
+            const endInput = tr.querySelector(".endAtInput");
+            const editBtn = tr.querySelector(".editBtn");
+            if (startInput && endInput && startTextEl && endTextEl && editBtn) {
+                let editing = false;
+
+                const setEditing = (value) => {
+                    editing = value;
+                    startTextEl.classList.toggle("isHidden", value);
+                    endTextEl.classList.toggle("isHidden", value);
+                    startInput.classList.toggle("isHidden", !value);
+                    endInput.classList.toggle("isHidden", !value);
+                    startInput.disabled = !value;
+                    endInput.disabled = !value;
+                    editBtn.textContent = value ? "save" : "edit";
+                };
+
+                editBtn.addEventListener("click", async () => {
+                    if (!editing) {
+                        startInput.value = timeValueFromEpoch(s.startAt);
+                        endInput.value = timeValueFromEpoch(s.endAt);
+                        setEditing(true);
+                        startInput.focus();
+                        return;
+                    }
+
+                    const newStartAt = epochFromWorkDateTime(s.workDate, startInput.value);
+                    const newEndAt = epochFromWorkDateTime(s.workDate, endInput.value);
+                    if (newStartAt === s.startAt && newEndAt === s.endAt) {
+                        setEditing(false);
+                        return;
+                    }
+
+                    editBtn.disabled = true;
+                    startInput.disabled = true;
+                    endInput.disabled = true;
+
+                    const updated = {
+                        ...s,
+                        startAt: newStartAt,
+                        endAt: newEndAt,
+                        state: newEndAt ? "DONE" : (newStartAt ? "WORKING" : s.state),
+                    };
+
+                    const res = await window.App.saveSession(updated);
+                    editBtn.disabled = false;
+
+                    if (!res?.ok) {
+                        alert(res?.message || "保存に失敗しました");
+                        startInput.value = timeValueFromEpoch(s.startAt);
+                        endInput.value = timeValueFromEpoch(s.endAt);
+                        setEditing(false);
+                        return;
+                    }
+
+                    await renderMonth(currentYear, currentMonth);
+                });
+            }
         }
 
         sumOverText.textContent = window.App.formatHM(overMin);
