@@ -75,19 +75,33 @@
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-        <td>${s.workDate}</td>
-        <td>
-          <span class="timeText startAtText">${startText}</span>
-          <input class="timeInput startAtInput isHidden" type="time" value="${timeValueFromEpoch(s.startAt)}" disabled>
-        </td>
-        <td>
-          <span class="timeText endAtText">${endText}</span>
-          <input class="timeInput endAtInput isHidden" type="time" value="${timeValueFromEpoch(s.endAt)}" disabled>
-        </td>
-        <td>${workMin == null ? "--:--" : window.App.formatHM(workMin)}</td>
-        <td>${diffText}</td>
-        <td><button class="editBtn" type="button">edit</button></td>
-      `;
+  <td>${s.workDate}</td>
+
+  <td>
+    <div class="timeCell">
+      <span class="timeText startAtText">${startText}</span>
+      <input class="timeInput startAtInput isHidden" type="time"
+        value="${timeValueFromEpoch(s.startAt)}" disabled>
+    </div>
+  </td>
+
+  <td>
+    <div class="timeCell">
+      <span class="timeText endAtText">${endText}</span>
+      <input class="timeInput endAtInput isHidden" type="time"
+        value="${timeValueFromEpoch(s.endAt)}" disabled>
+    </div>
+  </td>
+
+  <td>${workMin == null ? "--:--" : window.App.formatHM(workMin)}</td>
+  <td>${diffText}</td>
+
+  <td class="actionCell">
+    <div class="actionBox">
+      <button class="actionBtn editBtn" type="button">edit</button>
+    </div>
+  </td>
+`;
             monthTbody.appendChild(tr);
 
             const startTextEl = tr.querySelector(".startAtText");
