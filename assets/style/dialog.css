@@ -1,0 +1,48 @@
+.dialog {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000; /* bottomNavより上 */
+}
+
+.dialog.hidden {
+  display: none;
+}
+
+.dialogCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px 16px;
+  width: min(90%, 320px);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dialogActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 横方向センター */
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dialogActions .btn {
+  width: 80%; /* カードに対して中央に収まる */
+  max-width: 220px;
+}
+
+.btn.primary {
+  background-color: #3b82f6;
+  color: #fff;
+  padding: 20px;
+}
+
+.btn.cancel {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 20px;
+}

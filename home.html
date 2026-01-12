@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Deosil</title>
     <link rel="stylesheet" href="./assets/style/style.css" />
+    <link rel="stylesheet" href="./assets/style/dialog.css" />
 </head>
 
 <body>
@@ -95,8 +96,25 @@
                 <span class="tabIcon">📄</span>
                 <span class="tabLabel">Data</span>
             </a>
+            <a href="#" class="tab" id="issueTab">
+                <span class="tabIcon">💡</span>
+                <span class="tabLabel">Issue</span>
+            </a>
         </nav>
     </main>
+
+    <div id="issueDialog" class="dialog hidden">
+        <div class="dialogCard">
+            <h3>ご要望・不具合報告</h3>
+            <p>
+                Googleフォームに移動します<br>
+            </p>
+            <div class="dialogActions">
+                <button class="btn primary" id="issueGo">フォームへ進む</button>
+                <button class="btn cancel" id="issueCancel">キャンセル</button>
+            </div>
+        </div>
+    </div>
 
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -107,6 +125,7 @@
     <script src="./assets/scripts/sb.js"></script>
 
     <script src="./assets/scripts/home.js"></script>
+    <script src="./assets/scripts/dialog.js"></script>
 </body>
 
 </html>
