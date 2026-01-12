@@ -211,8 +211,8 @@ tbody tr:hover {
 
 /* 時刻セル：固定サイズの箱（横幅を絶対に動かさない） */
 .timeCell {
-  width: 60px;
-  height: 34px;
+  width: 80px;
+  height: 36px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -223,6 +223,7 @@ tbody tr:hover {
 .timeInput,
 .timeText {
   width: 100%;
+  min-width: 72px;
   height: 100%;
   box-sizing: border-box;
 
@@ -247,7 +248,7 @@ tbody tr:hover {
   border: 1px solid transparent;
   background: transparent;
   box-shadow: none;
-  padding: 0 8px;
+  padding: 0 4px;
   text-align: center;
 
   -webkit-appearance: none;
