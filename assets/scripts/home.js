@@ -55,17 +55,32 @@
 
     async function getTodayState() {
         const todayDate = window.App.formatDate(new Date());
+
+        // Prefer active WORKING session even if it is from yesterday.
+        const working = await window.App.getWorkingSession();
+        if (working) {
+            return {
+                kind: "WORKING",
+                displayDate: working.workDate ?? todayDate,
+                session: working,
+            };
+        }
+
         const todaySession = await window.App.getSessionByDate(todayDate);
         if (todaySession) {
             const kind = todaySession.state === "WORKING" ? "WORKING" : "DONE";
-            return { kind, todayDate, session: todaySession };
+            return {
+                kind,
+                displayDate: todaySession.workDate ?? todayDate,
+                session: todaySession,
+            };
         }
 
-        return { kind: "NONE", todayDate, session: null };
+        return { kind: "NONE", displayDate: todayDate, session: null };
     }
 
-    function renderFromState(kind, todayDate, session) {
-        workDateEl.textContent = todayDate;
+    function renderFromState(kind, displayDate, session) {
+        workDateEl.textContent = displayDate;
 
         if (kind === "NONE") {
             setBadge("未出勤", "warn");
@@ -83,6 +98,7 @@
             setButton("DONE");
         }
 
+        if (!session) return;
         startAtTextEl.textContent = window.App.formatTime(session.startAt);
         endAtTextEl.textContent = session.endAt ? window.App.formatTime(session.endAt) : "--:--";
 
@@ -96,11 +112,11 @@
     }
 
     async function renderHome() {
-        const { kind, todayDate, session } = await getTodayState();
+        const { kind, displayDate, session } = await getTodayState();
         currentKind = kind;
         currentSession = session;
-        currentDate = todayDate;
-        renderFromState(kind, todayDate, session);
+        currentDate = displayDate;
+        renderFromState(kind, displayDate, session);
     }
 
     // クリック時：状態に応じて出勤 or 退勤
