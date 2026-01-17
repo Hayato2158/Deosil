@@ -199,6 +199,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
+  table-layout: fixed;
 }
 th,
 td {
@@ -206,6 +207,7 @@ td {
   border-bottom: 1px solid var(--line);
   text-align: center;
   white-space: nowrap;
+  table-layout: fixed;
 }
 thead th {
   position: sticky;
@@ -218,22 +220,20 @@ tbody tr:hover {
   background: #f8fafc;
 }
 
-/* 時刻セル：固定サイズの箱（横幅を絶対に動かさない） */
+/* 出勤/退勤セルの“見た目の箱” */
 .timeCell {
-  width: 60px;
-  height: 34px;
+  position: relative;
+  width: 80px;
+  height: 36px;
   margin: 0 auto;
+}
+
+/* 表示文字は span で完全中央寄せ */
+.timeText {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* span と input は“同じ見た目”に揃える */
-.timeInput,
-.timeText {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
 
   font-family:
     system-ui,
@@ -244,35 +244,40 @@ tbody tr:hover {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 表示時：旧の良さ（表に溶ける） */
-.timeText {
+  /* 見た目はフラット */
   border: 1px solid transparent;
   background: transparent;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
-/* 入力時：通常は透明、focusでだけ入力欄化 */
+/* input は全面に被せて“操作だけ担当” */
 .timeInput {
-  border: 1px solid transparent;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  opacity: 0; /* 文字を消す（ズレの根源を封じる） */
+  margin: 0;
+  padding: 0;
+  border: 0;
   background: transparent;
-  box-shadow: none;
-  padding: 0 8px;
-  text-align: center;
 
   -webkit-appearance: none;
   appearance: none;
 }
 
-.timeInput:focus {
-  outline: none;
+/* 編集中だけ、タップできるようにする（disabledだと開かない端末があるので） */
+.timeCell:not(.isEditing) .timeInput {
+  pointer-events: none; /* 非編集時は押せない */
+}
+
+/* フォーカス見た目は .timeCell に出す（inputの描画は捨てる） */
+.timeCell.isEditing:focus-within .timeText {
   border-color: rgb(37, 99, 235);
   background: #fff;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-  border-radius: 10px;
 }
 
 /* disabledの見た目（編集モード外） */
@@ -284,15 +289,25 @@ tbody tr:hover {
 input[type="time"]::-webkit-calendar-picker-indicator {
   display: none;
 }
+/* 出勤・退勤列だけ、time入力が切れない最低幅を確保 */
+th:nth-child(2),
+td:nth-child(2),
+th:nth-child(3),
+td:nth-child(3) {
+  width: 80px; /* 80だと端末によってギリ。84〜92で調整 */
+}
+
+/* timeCellは余計な中央寄せをやめる */
+td:nth-child(2) .timeCell,
+td:nth-child(3) .timeCell {
+  width: 100%;
+  margin: 0;
+}
 
 /* 操作列：固定（edit/saveで揺れない） */
 .actionCell {
   width: 56px;
-}
-.actionBox {
-  width: 56px;
-  display: flex;
-  justify-content: center;
+  text-align: center;
 }
 
 /* edit/save共通サイズ */
