@@ -18,7 +18,11 @@
 }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   background: linear-gradient(180deg, #ffffff 0%, var(--bg) 45%);
   color: var(--text);
 }
@@ -40,7 +44,9 @@ h1 {
   border-radius: 18px;
   padding: 16px;
   margin: 14px 0;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03), 0 12px 24px rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.03),
+    0 12px 24px rgba(15, 23, 42, 0.08);
 }
 .card h2 {
   margin: 0 0 12px;
@@ -142,7 +148,10 @@ h1 {
   gap: 10px;
   box-shadow: 0 12px 18px rgba(15, 23, 42, 0.12);
   transform: translateY(0);
-  transition: transform 0.06s ease, opacity 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.06s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
   padding: 40px;
 }
 
@@ -226,7 +235,11 @@ tbody tr:hover {
   height: 100%;
   box-sizing: border-box;
 
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -358,7 +371,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 70px;
+  height: 90px;
   background: rgba(255, 255, 255, 0.92);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(10px);
