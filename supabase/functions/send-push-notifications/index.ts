@@ -29,17 +29,26 @@ serve(async (req) => {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return json({ error: "Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY (set via supabase secrets)" }, 500);
 
   // 送信元メール（適当に自分のものにしてOK）
-  webpush.setVapidDetails("hayato2158@example.com", VAPID_PUBLIC, VAPID_PRIVATE);
+  webpush.setVapidDetails("mailto:hayato2158@example.com", VAPID_PUBLIC, VAPID_PRIVATE);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
   // とりあえず全件送る（後で user_id 絞り込みや条件送信にする）
   const { data: subs, error } = await supabase
     .from("push_subscriptions")
-    .select("endpoint,p256dh,auth,user_id");
+    .select("endpoint,p256dh,auth,user_id")
+    .eq("enabled", true);
 
-  if (error) return json({ error: error.message }, 500);
-  if (!subs || subs.length === 0) return json({ ok: true, message: "no subscriptions" });
+  if (error) {
+    console.error("select failed", error);
+    return new Response(`select failed: ${error.message}`, { status: 500 });
+  }
+
+  if (!subs || subs.length === 0) {
+    return new Response(JSON.stringify({ ok: true, sent: 0, failed: 0, results: [] }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const payload = JSON.stringify({
     title: "Deosil Test Push",
