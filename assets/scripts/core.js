@@ -109,8 +109,8 @@
             }
         }
 
-        if (window.App.supabase && window.App.userId) {
-            const { data: { session } } = await window.App.supabase.auth.getSession();
+        if (window.App.supabase) {
+            const { data: { session }, error } = await window.App.supabase.auth.getSession();
             if (error) console.warn(error);
             window.App.userId = session?.user?.id ?? null;
         }
@@ -132,3 +132,48 @@
         return user;
     };
 })();
+
+//通知確認用
+async function subscribePushAndSave() {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") throw new Error("notification not granted");
+
+    const reg = await navigator.serviceWorker.ready;
+
+    const vapidPublicKey = window.DEOSIL_ENV?.VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) throw new Error("VAPID_PUBLIC_KEY is missing in config.js");
+
+    const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+
+    const json = sub.toJSON();
+    const endpoint = sub.endpoint;
+    const p256dh = json.keys?.p256dh;
+    const auth = json.keys?.auth;
+    if (!endpoint || !p256dh || !auth) throw new Error("invalid subscription keys");
+
+    const client = window.App?.supabase;
+    if (!client) throw new Error("supabase client not initialized. run App.init() first.");
+
+    const { data: { user }, error: userErr } = await client.auth.getUser();
+    if (userErr) throw userErr;
+    if (!user) throw new Error("not logged in");
+
+    const { error } = await client
+        .from("push_subscriptions")
+        .upsert({
+            user_id: user.id,
+            endpoint,
+            p256dh,
+            auth,
+            user_agent: navigator.userAgent,
+        }, { onConflict: "user_id,endpoint" });
+
+    if (error) throw error;
+    console.log("saved push subscription");
+
+    console.log({ endpoint, p256dh, auth });
+
+}
