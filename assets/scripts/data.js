@@ -87,7 +87,7 @@
   <td>
     <div class="timeCell">
       <span class="timeText startAtText">${startText}</span>
-      <input class="timeInput startAtInput isHidden" type="time"
+      <input class="timeInput startAtInput" type="time"
         value="${timeValueFromEpoch(s.startAt)}" disabled>
     </div>
   </td>
@@ -95,7 +95,7 @@
   <td>
     <div class="timeCell">
       <span class="timeText endAtText">${endText}</span>
-      <input class="timeInput endAtInput isHidden" type="time"
+      <input class="timeInput endAtInput" type="time"
         value="${timeValueFromEpoch(s.endAt)}" disabled>
     </div>
   </td>
@@ -121,12 +121,18 @@
 
                 const setEditing = (value) => {
                     editing = value;
-                    startTextEl.classList.toggle("isHidden", value);
-                    endTextEl.classList.toggle("isHidden", value);
-                    startInput.classList.toggle("isHidden", !value);
-                    endInput.classList.toggle("isHidden", !value);
+
+                    const startCell = startInput.closest(".timeCell");
+                    const endCell = endInput.closest(".timeCell");
+
+                    //spanは常に表示する
+                    //inputは表示状態の際は透明で編集時にpointer-eventsでinputを押下可能にする
+                    startCell?.classList.toggle("isEditing", value);
+                    endCell?.classList.toggle("isEditing", value);
+
                     startInput.disabled = !value;
                     endInput.disabled = !value;
+
                     editBtn.textContent = value ? "save" : "edit";
                 };
 
