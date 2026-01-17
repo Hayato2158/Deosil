@@ -38,7 +38,11 @@
     }
 
     function formatMonthDay(workDate) {
-        return (workDate && workDate.length === 10) ? workDate.slice(5, 10) : workDate;
+        if (!workDate || workDate.length !== 10) return workDate;
+
+        const mm = workDate.slice(5, 7);
+        const dd = workDate.slice(8, 10);
+        return `${mm}/${dd}`;
     }
 
     function timeValueFromEpoch(epochMs) {
