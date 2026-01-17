@@ -58,12 +58,13 @@
 
     async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
-        const basePath = getBasePath();
-        const swPath = basePath ? `${basePath}/service-worker.js` : "./service-worker.js";
+
+        const swUrl = new URL('"service-worker.js', location.href);
+
         try {
-            await navigator.serviceWorker.register(swPath);
+            await navigator.serviceWorker.register(swUrl.pathname);
         } catch (err) {
-            console.warn("Service worker registration failed", err);
+            console.warn("Service worker registration failed", err, swUrl.pathname);
         }
     }
 
