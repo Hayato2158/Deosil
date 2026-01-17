@@ -37,6 +37,10 @@
         titleEl.textContent = `${year}年${String(month).padStart(2, "0")}月`;
     }
 
+    function formatMonthDay(workDate) {
+        return (workDate && workDate.length === 10) ? workDate.slice(5, 10) : workDate;
+    }
+
     function timeValueFromEpoch(epochMs) {
         return epochMs ? window.App.formatTime(epochMs) : "";
     }
@@ -61,6 +65,9 @@
         let underMin = 0;
 
         for (const s of sessions) {
+
+            const workDateLabel = formatMonthDay(s.workDate);
+
             const { workMin, diffMin } = window.App.calcWorkAndDiff(s);
 
             let diffText = "--";
@@ -75,7 +82,7 @@
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-  <td>${s.workDate}</td>
+  <td>${workDateLabel}</td>
 
   <td>
     <div class="timeCell">
