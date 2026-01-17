@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Deosil</title>
+    <link rel="stylesheet" href="./assets/style/style.css" />
+    <link rel="stylesheet" href="./assets/style/dialog.css" />
+
+    <!-- favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon.ico/icon-32.png" />
+    <link rel="icon" href="./favicon.ico" />
+
+    <!-- PWA -->
+    <link rel="manifest" id="manifestLink" />
+    <meta name="theme-color" content="#2563eb" />
+    <!-- iOS-icons -->
+    <link rel="apple-touch-icon" href="./icons/pwa/apple-touch-icon.png" />
+    <!-- PWA enable for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+</head>
+
+<body>
+
+    <main class="container">
+        <h1>Deosil</h1>
+
+        <!-- Home（勤怠ボタンだけ） -->
+        <section id="viewHome" class="view">
+            <section class="card hero">
+                <h2>Home</h2>
+                <p class="muted" id="loginInfo">未ログイン</p>
+
+                <div class="headerLine">
+                    <div class="workDate" id="workDate">--</div>
+                    <div class="badge" id="stateBadge">--</div>
+                </div>
+
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="label">出勤</div>
+                        <div class="value" id="startAtText">--:--</div>
+                    </div>
+
+                    <div class="kpi">
+                        <div class="label">退勤</div>
+                        <div class="value" id="endAtText">--:--</div>
+                    </div>
+
+                    <div class="kpi">
+                        <div class="label">実働</div>
+                        <div class="value" id="workTimeText">--:--</div>
+                    </div>
+
+                    <div class="kpi">
+                        <div class="label">差分</div>
+                        <div class="value" id="diffText">--</div>
+                    </div>
+                </div>
+
+                <p class="hint" id="hintText"></p>
+            </section>
+        </section>
+
+        <div class="actions">
+            <button id="btnToggle" class="btn btnStart"><span class="dot"></span>出勤</button>
+        </div>
+
+        <!-- Data（今日までの勤怠記録） -->
+        <section id="viewData" class="view isHidden">
+            <section class="card">
+                <h2>Data（今月）</h2>
+
+                <div class="rowSimple">
+                    <div class="muted">残業合計</div>
+                    <div id="sumOverText" class="strong">--:--</div>
+                </div>
+                <div class="rowSimple">
+                    <div class="muted">早上がり合計</div>
+                    <div id="sumUnderText" class="strong">--:--</div>
+                </div>
+
+                <div class="tableWrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>出勤</th>
+                                <th>退勤</th>
+                                <th>実働</th>
+                                <th>差分</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthTbody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
+
+        <!-- ボトムナビ -->
+        <nav class="bottomNav" aria-label="bottom navigation">
+            <a href="./home.html" class="tab active">
+                <span class="tabIcon">🏠</span>
+                <span class="tabLabel">Home</span>
+            </a>
+            <a href="./data.html" class="tab">
+                <span class="tabIcon">📄</span>
+                <span class="tabLabel">Data</span>
+            </a>
+            <a href="#" class="tab" id="issueTab">
+                <span class="tabIcon">💡</span>
+                <span class="tabLabel">Issue</span>
+            </a>
+        </nav>
+    </main>
+
+    <div id="issueDialog" class="dialog hidden">
+        <div class="dialogCard">
+            <h3>ご要望・不具合報告</h3>
+            <p>
+                Googleフォームに移動します<br>
+            </p>
+            <div class="dialogActions">
+                <button class="btn primary" id="issueGo">フォームへ進む</button>
+                <button class="btn cancel" id="issueCancel">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/scripts/config.js"></script>
+
+    <script src="./assets/scripts/core.js"></script>
+    <script src="./assets/scripts/idb.js"></script>
+    <script src="./assets/scripts/sb.js"></script>
+
+    <script src="./assets/scripts/home.js"></script>
+    <script src="./assets/scripts/dialog.js"></script>
+</body>
+
+</html>
