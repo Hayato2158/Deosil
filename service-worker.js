@@ -2,7 +2,7 @@ self.addEventListener("push", (event) => {
     const fallback = {
         title: "Deosil",
         body: "You have a new notification.",
-        url: self.registration?.scope || "/",
+        url: "home.html",
     };
 
     let payload = { ...fallback };
@@ -33,7 +33,7 @@ self.addEventListener("notificationclick", (event) => {
 
     event.waitUntil(async () => {
 
-        const normalized = String(rawUrl).repace(/^\/+/, "");
+        const normalized = String(rawUrl).replace(/^\/+/, "");
         const targetUrl = new URL(normalized, self.registration.scope).toString();
 
         const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
