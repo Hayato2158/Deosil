@@ -29,7 +29,7 @@ serve(async (req) => {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return json({ error: "Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY (set via supabase secrets)" }, 500);
 
   // 送信元メール（適当に自分のものにしてOK）
-  webpush.setVapidDetails("mailto:you@example.com", VAPID_PUBLIC, VAPID_PRIVATE);
+  webpush.setVapidDetails("hayato2158@example.com", VAPID_PUBLIC, VAPID_PRIVATE);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
@@ -44,7 +44,7 @@ serve(async (req) => {
   const payload = JSON.stringify({
     title: "Deosil Test Push",
     body: "Edge Function から Push 飛んだ！",
-    url: "index.html",
+    url: "home.html",
   });
 
   const results: Array<{ endpoint: string; ok: boolean; status?: number; error?: string }> = [];
