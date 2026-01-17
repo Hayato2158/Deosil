@@ -307,11 +307,7 @@ td:nth-child(3) .timeCell {
 /* 操作列：固定（edit/saveで揺れない） */
 .actionCell {
   width: 56px;
-}
-.actionBox {
-  width: 56px;
-  display: flex;
-  justify-content: center;
+  text-align: center;
 }
 
 /* edit/save共通サイズ */
