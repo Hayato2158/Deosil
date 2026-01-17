@@ -34,6 +34,39 @@
             : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
+    function normalizeBasePath(path) {
+        if (!path) return "";
+        let normalized = String(path);
+        if (!normalized.startsWith("/")) normalized = `/${normalized}`;
+        if (normalized.length > 1 && normalized.endsWith("/")) {
+            normalized = normalized.slice(0, -1);
+        }
+        return normalized;
+    }
+
+    function getBasePath() {
+        return normalizeBasePath(window.DEOSIL_ENV?.BASE_PATH);
+    }
+
+    function applyBasePath() {
+        const basePath = getBasePath();
+        const manifestHref = basePath ? `${basePath}/manifest.webmanifest` : "./manifest.webmanifest";
+        const link = document.querySelector('link[rel="manifest"]');
+        if (link) link.setAttribute("href", manifestHref);
+        return basePath;
+    }
+
+    async function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return;
+        const basePath = getBasePath();
+        const swPath = basePath ? `${basePath}/service-worker.js` : "./service-worker.js";
+        try {
+            await navigator.serviceWorker.register(swPath);
+        } catch (err) {
+            console.warn("Service worker registration failed", err);
+        }
+    }
+
     function calcWorkAndDiff(session) {
         if (!session?.startAt || !session?.endAt) return { workMin: null, diffMin: null };
         const grossMin = Math.floor((session.endAt - session.startAt) / 60000);
@@ -49,6 +82,7 @@
     window.App.supabase = window.App.supabase ?? null;
     window.App.db = window.App.db ?? null;
     window.App.userId = window.App.userId ?? null;
+    window.App.basePath = window.App.basePath ?? "";
 
     // util を公開
     window.App.formatDate = formatDate;
@@ -59,6 +93,7 @@
 
     // init（home.js / data.js / login.js から呼ぶ）
     window.App.init = async function init() {
+        window.App.basePath = applyBasePath();
         // IndexedDB 初期化（idb.js が提供）
         if (!window.App.db) {
             if (!window.App.openDb) throw new Error("openDb is not defined. Did you load idb.js before core.js?");
@@ -79,6 +114,8 @@
             if (error) console.warn(error);
             window.App.userId = session?.user?.id ?? null;
         }
+
+        await registerServiceWorker();
     };
 
     // 認証ガード（sb.js の getAuthedUser に依存）
