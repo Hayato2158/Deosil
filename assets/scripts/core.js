@@ -65,7 +65,7 @@
     async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
 
-        const swUrl = new URL('"service-worker.js', location.href);
+        const swUrl = new URL('service-worker.js', location.href);
 
         try {
             await navigator.serviceWorker.register(swUrl.pathname);
@@ -142,6 +142,18 @@
 
 //通知確認用
 async function subscribePushAndSave() {
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        const raw = atob(base64);
+        const output = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; ++i) {
+            output[i] = raw.charCodeAt(i);
+        }
+        return output;
+    }
     const perm = await Notification.requestPermission();
     if (perm !== "granted") throw new Error("notification not granted");
 

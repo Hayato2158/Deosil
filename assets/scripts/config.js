@@ -3,5 +3,8 @@ const isLocal = location.hostname === "localhost";
 window.DEOSIL_ENV = {
     SUPABASE_URL: "https://bllysyzdusuregqlraoi.supabase.co",
     SUPABASE_ANON_KEY: "sb_publishable_lVoteFia8h6EiXwdO7aqiA_Nn365Ewn",
+
     BASE_PATH: isLocal ? "" : "/Deosil",
+
+    VAPID_PUBLIC_KEY: "BB8JTEV0NBjscmXhiMoB8dDFza1LpfaOFs9yWN6UdEEpj-irhxXW6ovC7C3tJbhH3yjrNhYLPI_rKDk25rRrt8Q",
 };
