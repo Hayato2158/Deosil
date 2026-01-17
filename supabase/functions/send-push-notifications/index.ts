@@ -44,7 +44,7 @@ serve(async (req) => {
   const payload = JSON.stringify({
     title: "Deosil Test Push",
     body: "Edge Function から Push 飛んだ！",
-    url: "home.html",
+    url: "index.html",
   });
 
   const results: Array<{ endpoint: string; ok: boolean; status?: number; error?: string }> = [];
