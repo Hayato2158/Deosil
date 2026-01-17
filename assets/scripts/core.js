@@ -49,12 +49,18 @@
     }
 
     function applyBasePath() {
-        const basePath = getBasePath();
-        const manifestHref = basePath ? `${basePath}/manifest.webmanifest` : "./manifest.webmanifest";
+        const basePath = getBasePath(); // "" or "/Deosil" or "/Deosil/notify-dev"
+
+        // basePath が空でも「今のページ階層」から決めたいならここで推定も可
+        // 今回は getBasePath() を信頼して「絶対パス」で指定する
+        const manifestPath = (basePath || "") + "/manifest.webmanifest";
+
         const link = document.querySelector('link[rel="manifest"]');
-        if (link) link.setAttribute("href", manifestHref);
+        if (link) link.href = manifestPath; // setAttribute より href 代入が安全
+
         return basePath;
     }
+
 
     async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
