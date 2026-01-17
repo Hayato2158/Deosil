@@ -49,21 +49,28 @@
     }
 
     function applyBasePath() {
-        const basePath = getBasePath();
-        const manifestHref = basePath ? `${basePath}/manifest.webmanifest` : "./manifest.webmanifest";
+        const basePath = getBasePath(); // "" or "/Deosil" or "/Deosil/notify-dev"
+
+        // basePath が空でも「今のページ階層」から決めたいならここで推定も可
+        // 今回は getBasePath() を信頼して「絶対パス」で指定する
+        const manifestPath = (basePath || "") + "/manifest.webmanifest";
+
         const link = document.querySelector('link[rel="manifest"]');
-        if (link) link.setAttribute("href", manifestHref);
+        if (link) link.href = manifestPath; // setAttribute より href 代入が安全
+
         return basePath;
     }
 
+
     async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
-        const basePath = getBasePath();
-        const swPath = basePath ? `${basePath}/service-worker.js` : "./service-worker.js";
+
+        const swUrl = new URL('service-worker.js', location.href);
+
         try {
-            await navigator.serviceWorker.register(swPath);
+            await navigator.serviceWorker.register(swUrl.pathname);
         } catch (err) {
-            console.warn("Service worker registration failed", err);
+            console.warn("Service worker registration failed", err, swUrl.pathname);
         }
     }
 
@@ -109,8 +116,8 @@
             }
         }
 
-        if (window.App.supabase && window.App.userId) {
-            const { data: { session } } = await window.App.supabase.auth.getSession();
+        if (window.App.supabase) {
+            const { data: { session }, error } = await window.App.supabase.auth.getSession();
             if (error) console.warn(error);
             window.App.userId = session?.user?.id ?? null;
         }
@@ -132,3 +139,60 @@
         return user;
     };
 })();
+
+//通知確認用
+async function subscribePushAndSave() {
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        const raw = atob(base64);
+        const output = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; ++i) {
+            output[i] = raw.charCodeAt(i);
+        }
+        return output;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") throw new Error("notification not granted");
+
+    const reg = await navigator.serviceWorker.ready;
+
+    const vapidPublicKey = window.DEOSIL_ENV?.VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) throw new Error("VAPID_PUBLIC_KEY is missing in config.js");
+
+    const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+
+    const json = sub.toJSON();
+    const endpoint = sub.endpoint;
+    const p256dh = json.keys?.p256dh;
+    const auth = json.keys?.auth;
+    if (!endpoint || !p256dh || !auth) throw new Error("invalid subscription keys");
+
+    const client = window.App?.supabase;
+    if (!client) throw new Error("supabase client not initialized. run App.init() first.");
+
+    const { data: { user }, error: userErr } = await client.auth.getUser();
+    if (userErr) throw userErr;
+    if (!user) throw new Error("not logged in");
+
+    const { error } = await client
+        .from("push_subscriptions")
+        .upsert({
+            user_id: user.id,
+            endpoint,
+            p256dh,
+            auth,
+            user_agent: navigator.userAgent,
+        }, { onConflict: "user_id,endpoint" });
+
+    if (error) throw error;
+    console.log("saved push subscription");
+
+    console.log({ endpoint, p256dh, auth });
+
+}
