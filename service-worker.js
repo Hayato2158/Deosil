@@ -26,7 +26,26 @@ self.addEventListener("push", (event) => {
 });
 
 self.addEventListener("notificationclick", (event) => {
-    const targetUrl = event.notification?.data?.url || self.registration.scope || "/";
     event.notification.close();
-    event.waitUntil(clients.openWindow(targetUrl));
+
+    const data = event.notification.data || {};
+    const rawUrl = data.url || "home.html";
+
+    event.waitUntil(async () => {
+
+        const normalized = String(rawUrl).repace(/^\/+/, "");
+        const targetUrl = new URL(normalized, self.registration.scope).toString();
+
+        const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
+
+        for (const client of all) {
+            if ("focus" in client) {
+                await client.focus();
+                if ("navigate" in client) await client.navigate(targetUrl);
+                return;
+            }
+        }
+
+        await clients.openWindow(targetUrl);
+    });
 });
