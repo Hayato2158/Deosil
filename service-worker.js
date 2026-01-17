@@ -31,9 +31,10 @@ self.addEventListener("notificationclick", (event) => {
     const data = event.notification.data || {};
     const rawUrl = data.url || "home.html";
 
-    event.waitUntil(async () => {
-
+    event.waitUntil((async () => {
+        // URL を正規化
         const normalized = String(rawUrl).replace(/^\/+/, "");
+        // ターゲット URL を決定
         const targetUrl = new URL(normalized, self.registration.scope).toString();
 
         const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
@@ -47,5 +48,5 @@ self.addEventListener("notificationclick", (event) => {
         }
 
         await clients.openWindow(targetUrl);
-    });
+    })());
 });
