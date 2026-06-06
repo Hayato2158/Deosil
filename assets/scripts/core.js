@@ -5,7 +5,6 @@
 (() => {
     // ===== 固定値（MVP） =====
     const REQUIRED_MIN = 480; // 8h
-    const BREAK_MIN = 60;     // 1h
 
     // ===== util =====
     function pad2(n) { return String(n).padStart(2, "0"); }
@@ -26,6 +25,11 @@
         const h = Math.floor(abs / 60);
         const m = abs % 60;
         return `${sign}${h}:${pad2(m)}`;
+    }
+
+    function breakMinForGross(grossMin) {
+        if (grossMin <= 360) return 0;
+        return 60;
     }
 
     function uuid() {
@@ -77,7 +81,7 @@
     function calcWorkAndDiff(session) {
         if (!session?.startAt || !session?.endAt) return { workMin: null, diffMin: null };
         const grossMin = Math.floor((session.endAt - session.startAt) / 60000);
-        const workMin = Math.max(0, grossMin - BREAK_MIN);
+        const workMin = Math.max(0, grossMin - breakMinForGross(grossMin));
         const diffMin = workMin - REQUIRED_MIN;
         return { workMin, diffMin };
     }

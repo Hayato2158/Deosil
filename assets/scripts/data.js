@@ -124,6 +124,18 @@
             if (startInput && endInput && startTextEl && endTextEl && editBtn) {
                 let editing = false;
 
+                const displayTimeValue = (value) => value || "--:--";
+
+                const syncTimeText = () => {
+                    startTextEl.textContent = displayTimeValue(startInput.value);
+                    endTextEl.textContent = displayTimeValue(endInput.value);
+                };
+
+                const resetTimeText = () => {
+                    startTextEl.textContent = startText;
+                    endTextEl.textContent = endText;
+                };
+
                 const setEditing = (value) => {
                     editing = value;
 
@@ -141,10 +153,16 @@
                     editBtn.textContent = value ? "save" : "edit";
                 };
 
+                startInput.addEventListener("input", syncTimeText);
+                startInput.addEventListener("change", syncTimeText);
+                endInput.addEventListener("input", syncTimeText);
+                endInput.addEventListener("change", syncTimeText);
+
                 editBtn.addEventListener("click", async () => {
                     if (!editing) {
                         startInput.value = timeValueFromEpoch(s.startAt);
                         endInput.value = timeValueFromEpoch(s.endAt);
+                        syncTimeText();
                         setEditing(true);
                         startInput.focus();
                         return;
@@ -153,6 +171,7 @@
                     const newStartAt = epochFromWorkDateTime(s.workDate, startInput.value);
                     const newEndAt = epochFromWorkDateTime(s.workDate, endInput.value);
                     if (newStartAt === s.startAt && newEndAt === s.endAt) {
+                        resetTimeText();
                         setEditing(false);
                         return;
                     }
@@ -175,6 +194,7 @@
                         alert(res?.message || "保存に失敗しました");
                         startInput.value = timeValueFromEpoch(s.startAt);
                         endInput.value = timeValueFromEpoch(s.endAt);
+                        resetTimeText();
                         setEditing(false);
                         return;
                     }

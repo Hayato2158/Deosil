@@ -251,14 +251,14 @@ tbody tr:hover {
   box-sizing: border-box;
 }
 
-/* input は全面に被せて、非編集時は操作だけ担当 */
+/* input は全面に被せて“操作だけ担当” */
 .timeInput {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 
-  opacity: 0;
+  opacity: 0; /* 文字を消す（ズレの根源を封じる） */
   margin: 0;
   padding: 0;
   border: 0;
@@ -268,27 +268,16 @@ tbody tr:hover {
   appearance: none;
 }
 
-.timeCell.isEditing .timeText {
-  opacity: 0;
-}
-
-.timeCell.isEditing .timeInput {
-  opacity: 1;
-  padding: 0 6px;
-  border: 1px solid rgb(37, 99, 235);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-  box-sizing: border-box;
-  color: #0f172a;
-  font: inherit;
-  font-weight: 700;
-  text-align: center;
-}
-
 /* 編集中だけ、タップできるようにする（disabledだと開かない端末があるので） */
 .timeCell:not(.isEditing) .timeInput {
   pointer-events: none; /* 非編集時は押せない */
+}
+
+/* フォーカス見た目は .timeCell に出す（inputの描画は捨てる） */
+.timeCell.isEditing:focus-within .timeText {
+  border-color: rgb(37, 99, 235);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 /* disabledの見た目（編集モード外） */
