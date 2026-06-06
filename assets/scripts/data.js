@@ -10,12 +10,13 @@
     const monthTbody = document.getElementById("monthTbody");
     const sumOverText = document.getElementById("sumOverText");
     const sumUnderText = document.getElementById("sumUnderText");
+    const sumNetOverText = document.getElementById("sumNetOverText");
 
     const btnPrev = document.getElementById("btnPrevMonth");
     const btnNext = document.getElementById("btnNextMonth");
 
     // Dataページ以外なら何もしない
-    if (!monthTbody || !sumOverText || !sumUnderText) return;
+    if (!monthTbody || !sumOverText || !sumUnderText || !sumNetOverText) return;
 
     let currentYear;
     let currentMonth;
@@ -185,6 +186,7 @@
 
         sumOverText.textContent = window.App.formatHM(overMin);
         sumUnderText.textContent = window.App.formatHM(underMin);
+        sumNetOverText.textContent = window.App.formatHM(overMin - underMin);
     }
 
     setCurrentToNow();
