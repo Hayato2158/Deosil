@@ -71,3 +71,39 @@
   transform: translate(20px, -50%);
   outline-color: rgb(37, 99, 235);
 }
+
+.accountCard {
+  display: grid;
+  gap: 12px;
+}
+
+.accountCard h2,
+.accountCard p {
+  margin: 0;
+}
+
+.logoutButton {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #b91c1c;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.logoutButton:hover {
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.logoutButton:active {
+  transform: translateY(1px);
+}
+
+.logoutHint {
+  min-height: 1.2em;
+  color: #b91c1c;
+  font-size: 13px;
+}

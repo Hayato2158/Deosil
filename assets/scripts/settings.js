@@ -6,6 +6,48 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const toggle = document.getElementById("pushEnabledToggle");
     const hint = document.getElementById("pushHint");
+    const accountInfo = document.getElementById("accountInfo");
+    const btnLogout = document.getElementById("btnLogout");
+    const logoutHint = document.getElementById("logoutHint");
+    const logoutDialog = document.getElementById("logoutDialog");
+    const logoutYes = document.getElementById("logoutYes");
+    const logoutNo = document.getElementById("logoutNo");
+
+    if (accountInfo) {
+        accountInfo.textContent = user.email || "ログイン中";
+    }
+
+    btnLogout?.addEventListener("click", () => {
+        if (logoutHint) logoutHint.textContent = "";
+        logoutDialog?.classList.remove("hidden");
+        logoutYes?.focus();
+    });
+
+    logoutNo?.addEventListener("click", () => {
+        logoutDialog?.classList.add("hidden");
+        btnLogout?.focus();
+    });
+
+    logoutYes?.addEventListener("click", async () => {
+        if (!App.supabase) return;
+
+        logoutYes.disabled = true;
+        if (logoutNo) logoutNo.disabled = true;
+
+        try {
+            const { error } = await App.supabase.auth.signOut({ scope: "local" });
+            if (error) throw error;
+
+            App.userId = null;
+            location.replace("./login.html");
+        } catch (error) {
+            console.warn(error);
+            logoutDialog?.classList.add("hidden");
+            if (logoutHint) logoutHint.textContent = "ログアウトに失敗しました。もう一度お試しください。";
+            logoutYes.disabled = false;
+            if (logoutNo) logoutNo.disabled = false;
+        }
+    });
 
     // この端末のendpointを取る
     if (!("serviceWorker" in navigator)) {
