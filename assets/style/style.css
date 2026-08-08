@@ -224,6 +224,16 @@ tbody tr:hover {
   background: #f8fafc;
 }
 
+#monthTbody tr.isSaturday td,
+#monthTbody tr.isSaturday .timeText {
+  color: #2563eb;
+}
+
+#monthTbody tr.isSunday td,
+#monthTbody tr.isSunday .timeText {
+  color: #dc2626;
+}
+
 /* 出勤/退勤セルの“見た目の箱” */
 .timeCell {
   position: relative;

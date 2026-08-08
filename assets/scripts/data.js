@@ -12,6 +12,7 @@
     const sumOverText = document.getElementById("sumOverText");
     const sumUnderText = document.getElementById("sumUnderText");
     const sumNetOverText = document.getElementById("sumNetOverText");
+    const sumWorkText = document.getElementById("sumWorkText");
 
     const btnPrev = document.getElementById("btnPrevMonth");
     const btnNext = document.getElementById("btnNextMonth");
@@ -53,7 +54,7 @@
     const deleteSessionNo = document.getElementById("deleteSessionNo");
 
     // Dataページ以外なら何もしない
-    if (!monthTbody || !sumOverText || !sumUnderText || !sumNetOverText) return;
+    if (!monthTbody || !sumOverText || !sumUnderText || !sumNetOverText || !sumWorkText) return;
 
     let currentYear;
     let currentMonth;
@@ -85,6 +86,22 @@
         const mm = workDate.slice(5, 7);
         const dd = workDate.slice(8, 10);
         return `${mm}/${dd}`;
+    }
+
+    function weekendClassFromWorkDate(workDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate || "")) return "";
+
+        const [year, month, day] = workDate.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        if (
+            date.getFullYear() !== year ||
+            date.getMonth() !== month - 1 ||
+            date.getDate() !== day
+        ) return "";
+
+        if (date.getDay() === 6) return "isSaturday";
+        if (date.getDay() === 0) return "isSunday";
+        return "";
     }
 
     function timeValueFromEpoch(epochMs) {
@@ -261,12 +278,14 @@
 
         let overMin = 0;
         let underMin = 0;
+        let workTotalMin = 0;
 
         for (const s of sessions) {
 
             const workDateLabel = formatMonthDay(s.workDate);
 
             const { workMin, diffMin } = window.App.calcWorkAndDiff(s);
+            if (workMin != null) workTotalMin += workMin;
 
             let diffText = "--";
             if (diffMin != null) {
@@ -279,6 +298,8 @@
             const endText = s.endAt ? window.App.formatTime(s.endAt) : "--:--";
 
             const tr = document.createElement("tr");
+            const weekendClass = weekendClassFromWorkDate(s.workDate);
+            if (weekendClass) tr.classList.add(weekendClass);
             tr.innerHTML = `
   <td>${workDateLabel}</td>
 
@@ -407,6 +428,7 @@
         sumOverText.textContent = window.App.formatHM(overMin);
         sumUnderText.textContent = window.App.formatHM(underMin);
         sumNetOverText.textContent = window.App.formatHM(overMin - underMin);
+        sumWorkText.textContent = window.App.formatHM(workTotalMin);
     }
 
     setCurrentToNow();
