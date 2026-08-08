@@ -41,6 +41,10 @@
   padding: 20px;
 }
 
+.entryTypeButton {
+  padding: 20px;
+}
+
 .btn.cancel {
   background-color: #e5e7eb;
   color: #374151;

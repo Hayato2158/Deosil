@@ -18,6 +18,10 @@
     const btnNext = document.getElementById("btnNextMonth");
 
     const btnAddSession = document.getElementById("btnAddSession");
+    const entryTypeDialog = document.getElementById("entryTypeDialog");
+    const entryTypeWork = document.getElementById("entryTypeWork");
+    const entryTypeLeave = document.getElementById("entryTypeLeave");
+    const entryTypeCancel = document.getElementById("entryTypeCancel");
     const entryDialog = document.getElementById("entryDialog");
     const entryForm = document.getElementById("entryForm");
     const entryWorkDate = document.getElementById("entryWorkDate");
@@ -26,6 +30,12 @@
     const entryError = document.getElementById("entryError");
     const entrySave = document.getElementById("entrySave");
     const entryCancel = document.getElementById("entryCancel");
+    const leaveEntryDialog = document.getElementById("leaveEntryDialog");
+    const leaveEntryForm = document.getElementById("leaveEntryForm");
+    const leaveWorkDate = document.getElementById("leaveWorkDate");
+    const leaveEntryError = document.getElementById("leaveEntryError");
+    const leaveEntrySave = document.getElementById("leaveEntrySave");
+    const leaveEntryCancel = document.getElementById("leaveEntryCancel");
     const duplicateDialog = document.getElementById("duplicateDialog");
     const duplicateYes = document.getElementById("duplicateYes");
     const duplicateNo = document.getElementById("duplicateNo");
@@ -120,8 +130,22 @@
         if (entryError) entryError.textContent = message;
     }
 
+    function showLeaveEntryError(message = "") {
+        if (leaveEntryError) leaveEntryError.textContent = message;
+    }
+
+    function openEntryTypeDialog() {
+        entryTypeDialog?.classList.remove("hidden");
+        entryTypeWork?.focus();
+    }
+
+    function closeEntryTypeDialog() {
+        entryTypeDialog?.classList.add("hidden");
+    }
+
     function openEntryDialog() {
         if (!entryDialog || !entryWorkDate || !entryStartTime || !entryEndTime) return;
+        closeEntryTypeDialog();
         entryWorkDate.value = window.App.formatDate(new Date());
         entryStartTime.value = "";
         entryEndTime.value = "";
@@ -135,6 +159,20 @@
         showEntryError();
     }
 
+    function openLeaveEntryDialog() {
+        if (!leaveEntryDialog || !leaveWorkDate) return;
+        closeEntryTypeDialog();
+        leaveWorkDate.value = window.App.formatDate(new Date());
+        showLeaveEntryError();
+        leaveEntryDialog.classList.remove("hidden");
+        leaveWorkDate.focus();
+    }
+
+    function closeLeaveEntryDialog() {
+        leaveEntryDialog?.classList.add("hidden");
+        showLeaveEntryError();
+    }
+
     function showDuplicateDialog(existing, values) {
         pendingDuplicate = { existing, values };
 
@@ -146,15 +184,22 @@
         if (duplicateNewEnd) duplicateNewEnd.textContent = values.endAt ? window.App.formatTime(values.endAt) : "--:--";
 
         entryDialog?.classList.add("hidden");
+        leaveEntryDialog?.classList.add("hidden");
         duplicateDialog?.classList.remove("hidden");
         duplicateYes?.focus();
     }
 
     function returnToEntryDialog() {
+        const kind = pendingDuplicate?.values?.kind;
         pendingDuplicate = null;
         duplicateDialog?.classList.add("hidden");
-        entryDialog?.classList.remove("hidden");
-        entryWorkDate?.focus();
+        if (kind === "leave") {
+            leaveEntryDialog?.classList.remove("hidden");
+            leaveWorkDate?.focus();
+        } else {
+            entryDialog?.classList.remove("hidden");
+            entryWorkDate?.focus();
+        }
     }
 
     function isLeaveSession(session) {
@@ -224,12 +269,22 @@
         const endTime = entryEndTime?.value || "";
         const startAt = epochFromWorkDateTime(workDate, startTime);
         const endAt = epochFromWorkDateTime(workDate, endTime);
-        return { workDate, startAt, endAt };
+        return { kind: "work", workDate, startAt, endAt };
+    }
+
+    function readLeaveEntryValues() {
+        return {
+            kind: "leave",
+            workDate: leaveWorkDate?.value || "",
+            startAt: null,
+            endAt: null,
+        };
     }
 
     function setSaving(value) {
         isSaving = value;
         if (entrySave) entrySave.disabled = value;
+        if (leaveEntrySave) leaveEntrySave.disabled = value;
         if (duplicateYes) duplicateYes.disabled = value;
         if (duplicateNo) duplicateNo.disabled = value;
     }
@@ -257,12 +312,19 @@
             pendingDuplicate = null;
             duplicateDialog?.classList.add("hidden");
             closeEntryDialog();
+            closeLeaveEntryDialog();
             await renderMonth(currentYear, currentMonth);
         } catch (error) {
             console.error("Failed to save session", error);
             duplicateDialog?.classList.add("hidden");
-            entryDialog?.classList.remove("hidden");
-            showEntryError(error?.message || "保存に失敗しました");
+            const message = error?.message || "保存に失敗しました";
+            if (values.kind === "leave") {
+                leaveEntryDialog?.classList.remove("hidden");
+                showLeaveEntryError(message);
+            } else {
+                entryDialog?.classList.remove("hidden");
+                showEntryError(message);
+            }
         } finally {
             setSaving(false);
         }
@@ -447,8 +509,12 @@
         });
     }
 
-    btnAddSession?.addEventListener("click", openEntryDialog);
+    btnAddSession?.addEventListener("click", openEntryTypeDialog);
+    entryTypeWork?.addEventListener("click", openEntryDialog);
+    entryTypeLeave?.addEventListener("click", openLeaveEntryDialog);
+    entryTypeCancel?.addEventListener("click", closeEntryTypeDialog);
     entryCancel?.addEventListener("click", closeEntryDialog);
+    leaveEntryCancel?.addEventListener("click", closeLeaveEntryDialog);
 
     entryForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -475,6 +541,30 @@
         } catch (error) {
             console.error("Failed to check existing session", error);
             showEntryError("データの確認に失敗しました。もう一度お試しください");
+        }
+    });
+
+    leaveEntryForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (isSaving || !leaveEntryForm.reportValidity()) return;
+
+        showLeaveEntryError();
+        const values = readLeaveEntryValues();
+        if (!values.workDate) {
+            showLeaveEntryError("日付を入力してください");
+            return;
+        }
+
+        try {
+            const existing = await window.App.getSessionByDate(values.workDate);
+            if (existing) {
+                showDuplicateDialog(existing, values);
+                return;
+            }
+            await saveEntry(values);
+        } catch (error) {
+            console.error("Failed to check existing session", error);
+            showLeaveEntryError("データの確認に失敗しました。もう一度お試しください");
         }
     });
 
