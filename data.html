@@ -23,34 +23,41 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 </head>
 
-<body>
+<body class="dataPage">
 
-    <main class="container">
-        <h1>Deosil</h1>
+    <main class="container dataContainer">
+        <h1 class="dataPageTitle">勤務データ</h1>
 
-        <section class="card hero">
+        <section class="card hero dataHero">
             <div class="monthNav">
-                <button id="btnPrevMonth" type="button">◀前月</button>
+                <button id="btnPrevMonth" type="button" aria-label="前月">‹</button>
                 <h2 id="dataTitle">---</h2>
-                <button id="btnNextMonth" type="button">翌月▶</button>
+                <button id="btnNextMonth" type="button" aria-label="翌月">›</button>
             </div>
 
-            <div class="rowSimple">
-                <div class="muted">残業合計</div>
-                <div id="sumOverText" class="strong">--:--</div>
+            <div class="dataSummary" aria-label="月間集計">
+                <div class="summaryItem">
+                    <span class="summaryLabel">残業合計</span>
+                    <strong id="sumOverText" class="summaryValue summaryValuePrimary">--:--</strong>
+                </div>
+                <div class="summaryItem">
+                    <span class="summaryLabel">早上がり合計</span>
+                    <strong id="sumUnderText" class="summaryValue summaryValueDanger">--:--</strong>
+                </div>
+                <div class="summaryItem">
+                    <span class="summaryLabel">実残業時間</span>
+                    <strong id="sumNetOverText" class="summaryValue summaryValuePrimary">--:--</strong>
+                </div>
+                <div class="summaryItem">
+                    <span class="summaryLabel">実稼働時間</span>
+                    <strong id="sumWorkText" class="summaryValue">--:--</strong>
+                </div>
             </div>
-            <div class="rowSimple">
-                <div class="muted">早上がり合計</div>
-                <div id="sumUnderText" class="strong">--:--</div>
-            </div>
-            <div class="rowSimple">
-                <div class="muted">実残業時間</div>
-                <div id="sumNetOverText" class="strong">--:--</div>
-            </div>
-            <div class="rowSimple">
-                <div class="muted">実稼働時間</div>
-                <div id="sumWorkText" class="strong">--:--</div>
-            </div>
+
+            <button id="btnAddSession" class="dataAddButton" type="button">
+                <span aria-hidden="true">＋</span>
+                <span>勤怠データを追加</span>
+            </button>
 
             <div class="tableWrap">
                 <table>
@@ -89,8 +96,6 @@
             </a>
         </nav>
     </main>
-
-    <button id="btnAddSession" class="fabAdd" type="button" aria-label="勤怠データを追加">＋</button>
 
     <div id="entryTypeDialog" class="dialog hidden" role="dialog" aria-modal="true"
         aria-labelledby="entryTypeDialogTitle">
@@ -188,32 +193,32 @@
         </div>
     </div>
 
-    <div id="sessionActionDialog" class="dialog hidden" role="dialog" aria-modal="true"
+    <div id="sessionActionDialog" class="dialog actionSheetDialog hidden" role="dialog" aria-modal="true"
         aria-labelledby="sessionActionDialogTitle">
         <div class="dialogCard sessionActionDialogCard">
-            <h3 id="sessionActionDialogTitle">勤怠データの操作</h3>
-            <dl class="sessionSummary">
-                <div>
-                    <dt>日付</dt>
-                    <dd id="sessionActionDate">---</dd>
-                </div>
-                <div>
-                    <dt>種別</dt>
-                    <dd id="sessionActionType">---</dd>
-                </div>
-                <div>
-                    <dt>出勤</dt>
-                    <dd id="sessionActionStart">--:--</dd>
-                </div>
-                <div>
-                    <dt>退勤</dt>
-                    <dd id="sessionActionEnd">--:--</dd>
-                </div>
-            </dl>
-            <div class="dialogActions">
-                <button class="btn primary" id="sessionActionEdit" type="button">編集</button>
-                <button class="btn danger" id="sessionActionDelete" type="button">削除</button>
-                <button class="btn cancel" id="sessionActionCancel" type="button">キャンセル</button>
+            <div class="actionSheetHandle" aria-hidden="true"></div>
+            <h3 id="sessionActionDialogTitle"><span id="sessionActionDate">---</span>の記録</h3>
+            <p class="actionSheetSummary">
+                <span id="sessionActionStart">--:--</span>
+                <span aria-hidden="true">→</span>
+                <span id="sessionActionEnd">--:--</span>
+                <span class="actionSheetWork">実働 <strong id="sessionActionWork">--:--</strong></span>
+            </p>
+            <span id="sessionActionType" class="visuallyHidden">---</span>
+            <div class="actionSheetActions">
+                <button class="actionSheetButton actionSheetEdit" id="sessionActionEdit" type="button">
+                    <svg class="actionSheetIcon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 20h4L19 9l-4-4L4 16v4Zm13.5-16.5 3 3" />
+                    </svg>
+                    <span>編集する</span>
+                </button>
+                <button class="actionSheetButton actionSheetDelete" id="sessionActionDelete" type="button">
+                    <svg class="actionSheetIcon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
+                    </svg>
+                    <span>削除する</span>
+                </button>
+                <button class="actionSheetCancel" id="sessionActionCancel" type="button">キャンセル</button>
             </div>
         </div>
     </div>

@@ -50,6 +50,7 @@
     const sessionActionType = document.getElementById("sessionActionType");
     const sessionActionStart = document.getElementById("sessionActionStart");
     const sessionActionEnd = document.getElementById("sessionActionEnd");
+    const sessionActionWork = document.getElementById("sessionActionWork");
     const sessionActionEdit = document.getElementById("sessionActionEdit");
     const sessionActionDelete = document.getElementById("sessionActionDelete");
     const sessionActionCancel = document.getElementById("sessionActionCancel");
@@ -87,15 +88,28 @@
 
     function renderTitle(year, month) {
         if (!titleEl) return;
-        titleEl.textContent = `${year}年${String(month).padStart(2, "0")}月`;
+        titleEl.textContent = `${year}年${month}月`;
     }
 
     function formatMonthDay(workDate) {
         if (!workDate || workDate.length !== 10) return workDate;
 
-        const mm = workDate.slice(5, 7);
-        const dd = workDate.slice(8, 10);
-        return `${mm}/${dd}`;
+        const month = workDate.slice(5, 7);
+        const day = workDate.slice(8, 10);
+        return `${month}/${day}`;
+    }
+
+    function weekdayLabelFromWorkDate(workDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate || "")) return "";
+        const [year, month, day] = workDate.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        return ["日", "月", "火", "水", "木", "金", "土"][date.getDay()] || "";
+    }
+
+    function formatSignedHM(minutes, zeroText = "±0:00") {
+        if (minutes === 0) return zeroText;
+        const prefix = minutes > 0 ? "+" : "-";
+        return `${prefix}${window.App.formatHM(Math.abs(minutes))}`;
     }
 
     function weekendClassFromWorkDate(workDate) {
@@ -221,12 +235,15 @@
 
     function openSessionActionDialog(session, beginEditing) {
         selectedSessionAction = { session, beginEditing };
-        setSessionSummary(session, {
-            date: sessionActionDate,
-            type: sessionActionType,
-            start: sessionActionStart,
-            end: sessionActionEnd,
-        });
+        const { workMin } = window.App.calcWorkAndDiff(session);
+        const weekday = weekdayLabelFromWorkDate(session.workDate);
+        if (sessionActionDate) {
+            sessionActionDate.textContent = `${formatMonthDay(session.workDate)}${weekday ? `（${weekday}）` : ""}`;
+        }
+        if (sessionActionType) sessionActionType.textContent = sessionTypeLabel(session);
+        if (sessionActionStart) sessionActionStart.textContent = session.startAt ? window.App.formatTime(session.startAt) : "--:--";
+        if (sessionActionEnd) sessionActionEnd.textContent = session.endAt ? window.App.formatTime(session.endAt) : "--:--";
+        if (sessionActionWork) sessionActionWork.textContent = workMin == null ? "--:--" : window.App.formatHM(workMin);
         sessionActionDialog?.classList.remove("hidden");
         sessionActionEdit?.focus();
     }
@@ -487,9 +504,9 @@
             }
         }
 
-        sumOverText.textContent = window.App.formatHM(overMin);
-        sumUnderText.textContent = window.App.formatHM(underMin);
-        sumNetOverText.textContent = window.App.formatHM(overMin - underMin);
+        sumOverText.textContent = formatSignedHM(overMin, "+0:00");
+        sumUnderText.textContent = formatSignedHM(-underMin, "-0:00");
+        sumNetOverText.textContent = formatSignedHM(overMin - underMin);
         sumWorkText.textContent = window.App.formatHM(workTotalMin);
     }
 

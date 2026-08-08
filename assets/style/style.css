@@ -474,30 +474,6 @@ td:nth-child(3) .timeCell {
   padding-bottom: 90px;
 }
 
-/* Data: manual session entry */
-.fabAdd {
-  position: fixed;
-  right: 20px;
-  bottom: calc(108px + env(safe-area-inset-bottom));
-  z-index: 1000;
-  width: 58px;
-  height: 58px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #3b82f6 0%, var(--primary) 100%);
-  color: #fff;
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
-}
-
-.fabAdd:active {
-  transform: translateY(1px);
-}
-
 .entryDialogCard {
   text-align: left;
 }
@@ -646,4 +622,255 @@ td:nth-child(3) .timeCell {
   color: #b91c1c;
   font-size: 13px;
   font-weight: 700;
+}
+
+/* Data page: mobile-first monthly records */
+.dataPage {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.dataPage .dataContainer {
+  width: 100%;
+  max-width: 520px;
+  padding: 14px 14px 108px;
+}
+
+.dataPageTitle {
+  margin: 8px 0 14px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.dataHero,
+.card.hero.dataHero {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dataHero .monthNav {
+  height: 42px;
+  margin: 0 0 8px;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.dataHero .monthNav h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.dataHero .monthNav button {
+  width: 52px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #334155;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dataHero .monthNav button:active {
+  background: #f1f5f9;
+}
+
+.dataSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.summaryItem {
+  display: grid;
+  min-height: 64px;
+  place-content: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.summaryItem:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+
+.summaryItem:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--line);
+}
+
+.summaryLabel {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.summaryValue {
+  color: var(--text);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.summaryValuePrimary {
+  color: var(--primary);
+}
+
+.summaryValueDanger {
+  color: var(--danger);
+}
+
+.dataAddButton {
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--primary);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.dataAddButton:active {
+  transform: translateY(1px);
+  background: #1d4ed8;
+}
+
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.dialog.actionSheetDialog {
+  bottom: 90px;
+  align-items: flex-end;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+}
+
+.dialog.actionSheetDialog .sessionActionDialogCard {
+  width: min(100%, 520px);
+  max-width: none;
+  padding: 10px 14px 14px;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.18);
+}
+
+.actionSheetHandle {
+  width: 52px;
+  height: 5px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.sessionActionDialogCard h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.actionSheetSummary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 9px 0 16px;
+  color: #334155;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.actionSheetWork {
+  margin-left: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.actionSheetActions {
+  display: grid;
+  gap: 10px;
+}
+
+.actionSheetButton,
+.actionSheetCancel {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.actionSheetButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.actionSheetEdit {
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(37, 99, 235, 0.05);
+  color: var(--primary);
+}
+
+.actionSheetDelete {
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.05);
+  color: var(--danger);
+}
+
+.actionSheetIcon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.actionSheetCancel {
+  min-height: 46px;
+  border: 0;
+  color: var(--primary);
+}
+
+@media (max-width: 360px) {
+  .dataPage .dataContainer {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
 }
