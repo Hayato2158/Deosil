@@ -14,6 +14,7 @@
     const diffTextEl = document.getElementById("diffText");
     const hintTextEl = document.getElementById("hintText");
     const btnToggle = document.getElementById("btnToggle");
+    const btnLeave = document.getElementById("btnLeave");
 
     // Homeページ以外なら何もしない
     if (!workDateEl || !stateBadgeEl || !btnToggle) return;
@@ -34,15 +35,18 @@
 
         if (mode === "START") {
             btnToggle.disabled = false;
+            if (btnLeave) btnLeave.disabled = false;
             btnToggle.className = "btn btnStart";
             btnToggle.innerHTML = `<span class="dot"></span>出勤`;
         } else if (mode === "END") {
             btnToggle.disabled = false;
+            if (btnLeave) btnLeave.disabled = true;
             btnToggle.className = "btn btnEnd";
             btnToggle.innerHTML = `<span class="dot"></span>退勤`;
         } else {
             // DONE（1日1勤務ルールなので押せない）
             btnToggle.disabled = true;
+            if (btnLeave) btnLeave.disabled = true;
             btnToggle.className = "btn btnStart"; // disabledなので見た目はどっちでも
             btnToggle.innerHTML = `<span class="dot"></span>完了`;
         }
@@ -68,7 +72,8 @@
 
         const todaySession = await window.App.getSessionByDate(todayDate);
         if (todaySession) {
-            const kind = todaySession.state === "WORKING" ? "WORKING" : "DONE";
+            const isLeave = todaySession.state === "DONE" && !todaySession.startAt && !todaySession.endAt;
+            const kind = todaySession.state === "WORKING" ? "WORKING" : (isLeave ? "LEAVE" : "DONE");
             return {
                 kind,
                 displayDate: todaySession.workDate ?? todayDate,
@@ -93,6 +98,9 @@
         } else if (kind === "WORKING") {
             setBadge("勤務中", "ok");
             setButton("END");
+        } else if (kind === "LEAVE") {
+            setBadge("休暇", "ok");
+            setButton("DONE");
         } else {
             setBadge("退勤済", "danger");
             setButton("DONE");
@@ -148,6 +156,26 @@
         } else {
             // DONEは押せない想定（disabled）だけど念のため
             setHint("本日はすでに退勤済みです。");
+        }
+
+        renderFromState(currentKind, currentDate, currentSession);
+        isBusy = false;
+    });
+
+    btnLeave?.addEventListener("click", async () => {
+        if (isBusy || currentKind !== "NONE") return;
+        isBusy = true;
+
+        setHint("");
+        btnToggle.disabled = true;
+        btnLeave.disabled = true;
+
+        const res = await window.App.createLeaveSession();
+        if (!res.ok) {
+            setHint(res.message);
+        } else {
+            currentKind = "LEAVE";
+            currentSession = res.session;
         }
 
         renderFromState(currentKind, currentDate, currentSession);

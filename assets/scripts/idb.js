@@ -140,17 +140,12 @@
 
     // mutations（勤怠データはSupabaseを正とし、IndexedDBには書き込まない）
     window.App.saveSession = async function saveSession(session) {
-        if (!session?.id) return { ok: false, message: "セッションIDが不正です。" };
-
-        const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
-        await reqToPromise(store.put(session));
-
-        // Supabase 蜷梧悄・・b.js 縺梧署萓幢ｼ・
-        if (window.App.tryUpsertToSupabase) {
-            await window.App.tryUpsertToSupabase(session);
+        if (!session?.workDate) return { ok: false, message: "勤務日が不正です。" };
+        if (!window.App.upsertSessionRemote) {
+            return { ok: false, message: "保存処理を初期化できませんでした。" };
         }
 
-        return { ok: true, session };
+        return await window.App.upsertSessionRemote(session);
     };
 
     window.App.createStartSession = async function createStartSession() {
@@ -174,15 +169,31 @@
             state: "WORKING",
         };
 
-        const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
-        await reqToPromise(store.put(session));
+        return await window.App.saveSession(session);
+    };
 
-        // Supabase 同期（sb.js が提供）
-        if (window.App.tryUpsertToSupabase) {
-            await window.App.tryUpsertToSupabase(session);
+    window.App.createLeaveSession = async function createLeaveSession() {
+        if (!window.App.userId) {
+            return { ok: false, message: "ユーザーIDが取得できません。再ログインしてください。" };
         }
 
-        return { ok: true, session };
+        const workDate = window.App.formatDate(new Date());
+
+        const working = await window.App.getWorkingSession();
+        if (working) return { ok: false, message: "勤務中のため休暇を登録できません。先に退勤してください。" };
+
+        const already = await window.App.getSessionByDate(workDate);
+        if (already) return { ok: false, message: "本日は既に記録があります（1日1勤務）。" };
+
+        const session = {
+            userId: window.App.userId,
+            workDate,
+            startAt: null,
+            endAt: null,
+            state: "DONE",
+        };
+
+        return await window.App.saveSession(session);
     };
 
     window.App.closeWorkingSession = async function closeWorkingSession() {
@@ -196,14 +207,6 @@
         working.endAt = Date.now();
         working.state = "DONE";
 
-        const store = tx(window.App.db, STORE_SESSIONS, "readwrite");
-        await reqToPromise(store.put(working));
-
-        // Supabase 同期（sb.js が提供）
-        if (window.App.tryUpsertToSupabase) {
-            await window.App.tryUpsertToSupabase(working);
-        }
-
-        return { ok: true, session: working };
+        return await window.App.saveSession(working);
     };
 })();
