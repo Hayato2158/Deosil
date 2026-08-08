@@ -51,6 +51,7 @@
     const sessionActionStart = document.getElementById("sessionActionStart");
     const sessionActionEnd = document.getElementById("sessionActionEnd");
     const sessionActionWork = document.getElementById("sessionActionWork");
+    const sessionActionHandle = document.getElementById("sessionActionHandle");
     const sessionActionEdit = document.getElementById("sessionActionEdit");
     const sessionActionDelete = document.getElementById("sessionActionDelete");
     const sessionActionCancel = document.getElementById("sessionActionCancel");
@@ -601,6 +602,7 @@
     });
 
     sessionActionDelete?.addEventListener("click", openDeleteSessionDialog);
+    sessionActionHandle?.addEventListener("click", closeSessionActionDialog);
     sessionActionCancel?.addEventListener("click", closeSessionActionDialog);
     deleteSessionNo?.addEventListener("click", returnToSessionActionDialog);
 
