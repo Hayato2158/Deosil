@@ -57,7 +57,7 @@
                             <th>退勤</th>
                             <th>実働</th>
                             <th>差分</th>
-                            <th>操作</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="monthTbody"></tbody>
@@ -149,6 +149,67 @@
             <div class="dialogActions">
                 <button class="btn primary" id="duplicateYes" type="button">はい</button>
                 <button class="btn cancel" id="duplicateNo" type="button">いいえ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionActionDialog" class="dialog hidden" role="dialog" aria-modal="true"
+        aria-labelledby="sessionActionDialogTitle">
+        <div class="dialogCard sessionActionDialogCard">
+            <h3 id="sessionActionDialogTitle">勤怠データの操作</h3>
+            <dl class="sessionSummary">
+                <div>
+                    <dt>日付</dt>
+                    <dd id="sessionActionDate">---</dd>
+                </div>
+                <div>
+                    <dt>種別</dt>
+                    <dd id="sessionActionType">---</dd>
+                </div>
+                <div>
+                    <dt>出勤</dt>
+                    <dd id="sessionActionStart">--:--</dd>
+                </div>
+                <div>
+                    <dt>退勤</dt>
+                    <dd id="sessionActionEnd">--:--</dd>
+                </div>
+            </dl>
+            <div class="dialogActions">
+                <button class="btn primary" id="sessionActionEdit" type="button">編集</button>
+                <button class="btn danger" id="sessionActionDelete" type="button">削除</button>
+                <button class="btn cancel" id="sessionActionCancel" type="button">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteSessionDialog" class="dialog hidden" role="alertdialog" aria-modal="true"
+        aria-labelledby="deleteSessionDialogTitle">
+        <div class="dialogCard deleteSessionDialogCard">
+            <h3 id="deleteSessionDialogTitle">この勤怠データを削除しますか？</h3>
+            <dl class="sessionSummary">
+                <div>
+                    <dt>日付</dt>
+                    <dd id="deleteSessionDate">---</dd>
+                </div>
+                <div>
+                    <dt>種別</dt>
+                    <dd id="deleteSessionType">---</dd>
+                </div>
+                <div>
+                    <dt>出勤</dt>
+                    <dd id="deleteSessionStart">--:--</dd>
+                </div>
+                <div>
+                    <dt>退勤</dt>
+                    <dd id="deleteSessionEnd">--:--</dd>
+                </div>
+            </dl>
+            <p id="deleteSessionWarning" class="deleteWarning">一覧から非表示になります。</p>
+            <p id="deleteSessionError" class="formError" role="alert"></p>
+            <div class="dialogActions">
+                <button class="btn danger" id="deleteSessionYes" type="button">削除する</button>
+                <button class="btn cancel" id="deleteSessionNo" type="button">キャンセル</button>
             </div>
         </div>
     </div>

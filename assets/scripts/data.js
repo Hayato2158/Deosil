@@ -34,6 +34,23 @@
     const duplicateNewStart = document.getElementById("duplicateNewStart");
     const duplicateOldEnd = document.getElementById("duplicateOldEnd");
     const duplicateNewEnd = document.getElementById("duplicateNewEnd");
+    const sessionActionDialog = document.getElementById("sessionActionDialog");
+    const sessionActionDate = document.getElementById("sessionActionDate");
+    const sessionActionType = document.getElementById("sessionActionType");
+    const sessionActionStart = document.getElementById("sessionActionStart");
+    const sessionActionEnd = document.getElementById("sessionActionEnd");
+    const sessionActionEdit = document.getElementById("sessionActionEdit");
+    const sessionActionDelete = document.getElementById("sessionActionDelete");
+    const sessionActionCancel = document.getElementById("sessionActionCancel");
+    const deleteSessionDialog = document.getElementById("deleteSessionDialog");
+    const deleteSessionDate = document.getElementById("deleteSessionDate");
+    const deleteSessionType = document.getElementById("deleteSessionType");
+    const deleteSessionStart = document.getElementById("deleteSessionStart");
+    const deleteSessionEnd = document.getElementById("deleteSessionEnd");
+    const deleteSessionWarning = document.getElementById("deleteSessionWarning");
+    const deleteSessionError = document.getElementById("deleteSessionError");
+    const deleteSessionYes = document.getElementById("deleteSessionYes");
+    const deleteSessionNo = document.getElementById("deleteSessionNo");
 
     // Dataページ以外なら何もしない
     if (!monthTbody || !sumOverText || !sumUnderText || !sumNetOverText) return;
@@ -42,6 +59,8 @@
     let currentMonth;
     let pendingDuplicate = null;
     let isSaving = false;
+    let selectedSessionAction = null;
+    let isDeleting = false;
 
     function setCurrentToNow() {
         const now = new Date();
@@ -119,6 +138,67 @@
         duplicateDialog?.classList.add("hidden");
         entryDialog?.classList.remove("hidden");
         entryWorkDate?.focus();
+    }
+
+    function isLeaveSession(session) {
+        return session?.state === "DONE" && !session.startAt && !session.endAt;
+    }
+
+    function sessionTypeLabel(session) {
+        if (isLeaveSession(session)) return "休暇";
+        if (session?.state === "WORKING") return "勤務中";
+        return "勤怠";
+    }
+
+    function setSessionSummary(session, elements) {
+        if (elements.date) elements.date.textContent = session?.workDate || "---";
+        if (elements.type) elements.type.textContent = sessionTypeLabel(session);
+        if (elements.start) elements.start.textContent = session?.startAt ? window.App.formatTime(session.startAt) : "--:--";
+        if (elements.end) elements.end.textContent = session?.endAt ? window.App.formatTime(session.endAt) : "--:--";
+    }
+
+    function openSessionActionDialog(session, beginEditing) {
+        selectedSessionAction = { session, beginEditing };
+        setSessionSummary(session, {
+            date: sessionActionDate,
+            type: sessionActionType,
+            start: sessionActionStart,
+            end: sessionActionEnd,
+        });
+        sessionActionDialog?.classList.remove("hidden");
+        sessionActionEdit?.focus();
+    }
+
+    function closeSessionActionDialog() {
+        sessionActionDialog?.classList.add("hidden");
+        selectedSessionAction = null;
+    }
+
+    function openDeleteSessionDialog() {
+        const session = selectedSessionAction?.session;
+        if (!session) return;
+
+        setSessionSummary(session, {
+            date: deleteSessionDate,
+            type: deleteSessionType,
+            start: deleteSessionStart,
+            end: deleteSessionEnd,
+        });
+        if (deleteSessionWarning) {
+            deleteSessionWarning.textContent = session.state === "WORKING"
+                ? "現在勤務中のデータです。削除すると勤務状態が解除されます。"
+                : "削除後は一覧から非表示になります。";
+        }
+        if (deleteSessionError) deleteSessionError.textContent = "";
+        sessionActionDialog?.classList.add("hidden");
+        deleteSessionDialog?.classList.remove("hidden");
+        deleteSessionNo?.focus();
+    }
+
+    function returnToSessionActionDialog() {
+        deleteSessionDialog?.classList.add("hidden");
+        sessionActionDialog?.classList.remove("hidden");
+        sessionActionDelete?.focus();
     }
 
     function readEntryValues() {
@@ -223,7 +303,7 @@
 
   <td class="actionCell">
     <div class="actionBox">
-      <button class="actionBtn editBtn" type="button">edit</button>
+      <button class="actionBtn editBtn menuBtn" type="button" aria-label="操作メニュー">︙</button>
     </div>
   </td>
 `;
@@ -236,6 +316,7 @@
             const editBtn = tr.querySelector(".editBtn");
             if (startInput && endInput && startTextEl && endTextEl && editBtn) {
                 let editing = false;
+                editBtn.setAttribute("aria-label", `${s.workDate}の操作メニュー`);
 
                 const displayTimeValue = (value) => value || "--:--";
 
@@ -263,7 +344,17 @@
                     startInput.disabled = !value;
                     endInput.disabled = !value;
 
-                    editBtn.textContent = value ? "save" : "edit";
+                    editBtn.classList.toggle("menuBtn", !value);
+                    editBtn.textContent = value ? "save" : "︙";
+                    editBtn.setAttribute("aria-label", value ? `${s.workDate}の編集内容を保存` : `${s.workDate}の操作メニュー`);
+                };
+
+                const beginEditing = () => {
+                    startInput.value = timeValueFromEpoch(s.startAt);
+                    endInput.value = timeValueFromEpoch(s.endAt);
+                    syncTimeText();
+                    setEditing(true);
+                    startInput.focus();
                 };
 
                 startInput.addEventListener("input", syncTimeText);
@@ -273,11 +364,7 @@
 
                 editBtn.addEventListener("click", async () => {
                     if (!editing) {
-                        startInput.value = timeValueFromEpoch(s.startAt);
-                        endInput.value = timeValueFromEpoch(s.endAt);
-                        syncTimeText();
-                        setEditing(true);
-                        startInput.focus();
+                        openSessionActionDialog(s, beginEditing);
                         return;
                     }
 
@@ -376,4 +463,44 @@
     });
 
     duplicateNo?.addEventListener("click", returnToEntryDialog);
+
+    sessionActionEdit?.addEventListener("click", () => {
+        const beginEditing = selectedSessionAction?.beginEditing;
+        sessionActionDialog?.classList.add("hidden");
+        selectedSessionAction = null;
+        beginEditing?.();
+    });
+
+    sessionActionDelete?.addEventListener("click", openDeleteSessionDialog);
+    sessionActionCancel?.addEventListener("click", closeSessionActionDialog);
+    deleteSessionNo?.addEventListener("click", returnToSessionActionDialog);
+
+    deleteSessionYes?.addEventListener("click", async () => {
+        const session = selectedSessionAction?.session;
+        if (!session || isDeleting) return;
+
+        isDeleting = true;
+        deleteSessionYes.disabled = true;
+        if (deleteSessionNo) deleteSessionNo.disabled = true;
+        if (deleteSessionError) deleteSessionError.textContent = "";
+
+        const result = await window.App.softDeleteSessionRemote?.(session.id);
+        if (!result?.ok) {
+            if (deleteSessionError) {
+                deleteSessionError.textContent = result?.message || "削除に失敗しました。";
+            }
+            deleteSessionYes.disabled = false;
+            if (deleteSessionNo) deleteSessionNo.disabled = false;
+            isDeleting = false;
+            return;
+        }
+
+        deleteSessionDialog?.classList.add("hidden");
+        sessionActionDialog?.classList.add("hidden");
+        selectedSessionAction = null;
+        deleteSessionYes.disabled = false;
+        if (deleteSessionNo) deleteSessionNo.disabled = false;
+        isDeleting = false;
+        await renderMonth(currentYear, currentMonth);
+    });
 })();

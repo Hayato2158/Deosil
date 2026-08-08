@@ -37,12 +37,13 @@
                 start_at: session.startAt ? new Date(session.startAt).toISOString() : null,
                 end_at: session.endAt ? new Date(session.endAt).toISOString() : null,
                 state: session.state,
+                deleted_at: null,
             };
 
             const { data, error } = await supabase
                 .from("sessions")
                 .upsert(row, { onConflict: "user_id,work_date" })
-                .select("id, user_id, work_date, start_at, end_at, state")
+                .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
                 .single();
 
             if (error) {
@@ -66,6 +67,7 @@
             startAt: row.start_at ? Date.parse(row.start_at) : null,
             endAt: row.end_at ? Date.parse(row.end_at) : null,
             state: row.state,
+            deletedAt: row.deleted_at ? Date.parse(row.deleted_at) : null,
         };
     }
 
@@ -79,9 +81,10 @@
 
         const { data, error } = await supabase
             .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state")
+            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
             .eq("user_id", user.id)
             .eq("work_date", workDate)
+            .is("deleted_at", null)
             .limit(1);
 
         if (error) {
@@ -101,9 +104,10 @@
 
         const { data, error } = await supabase
             .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state")
+            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
             .eq("user_id", user.id)
             .eq("state", "WORKING")
+            .is("deleted_at", null)
             .limit(1);
 
         if (error) {
@@ -126,8 +130,9 @@
 
         const { data, error } = await supabase
             .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state")
+            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
             .eq("user_id", user.id)
+            .is("deleted_at", null)
             .gte("work_date", start)
             .lte("work_date", end)
             .order("work_date", { ascending: true });
@@ -138,6 +143,42 @@
         }
 
         return (data || []).map(sbRowToSession);
+    };
+
+    window.App.softDeleteSessionRemote = async function softDeleteSessionRemote(sessionId) {
+        const supabase = window.App.supabase;
+        if (!supabase || !sessionId) {
+            return { ok: false, message: "削除対象を確認できませんでした。" };
+        }
+
+        try {
+            const user = await window.App.getAuthedUser();
+            if (!user) {
+                return { ok: false, message: "ログイン情報が確認できません。再ログインしてください。" };
+            }
+
+            const { data, error } = await supabase
+                .from("sessions")
+                .update({ deleted_at: new Date().toISOString() })
+                .eq("id", sessionId)
+                .eq("user_id", user.id)
+                .is("deleted_at", null)
+                .select("id")
+                .maybeSingle();
+
+            if (error) {
+                console.warn("[sync] soft delete failed:", error);
+                return { ok: false, message: "削除に失敗しました。通信状態を確認して、もう一度お試しください。" };
+            }
+            if (!data) {
+                return { ok: false, message: "削除対象が見つかりませんでした。一覧を再読み込みしてください。" };
+            }
+
+            return { ok: true };
+        } catch (error) {
+            console.warn("[sync] unexpected soft delete error:", error);
+            return { ok: false, message: "削除に失敗しました。通信状態を確認して、もう一度お試しください。" };
+        }
     };
 
 })();

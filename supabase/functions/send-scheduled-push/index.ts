@@ -74,6 +74,7 @@ serve(async (req) => {
         .from("sessions")
         .select("user_id,state")
         .eq("work_date", workDate)
+        .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
       if (sErr) return new Response(`sessions select failed: ${sErr.message}`, { status: 500 });
@@ -107,6 +108,7 @@ serve(async (req) => {
         .select("user_id")
         .eq("work_date", workDate)
         .eq("state", "working")
+        .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
       if (wErr) return new Response(`sessions select failed: ${wErr.message}`, { status: 500 });
@@ -129,6 +131,7 @@ serve(async (req) => {
         .select("user_id,start_at,end_at,state")
         .eq("work_date", workDate)
         .eq("state", "working")
+        .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
       if (wErr) return new Response(`sessions select failed: ${wErr.message}`, { status: 500 });

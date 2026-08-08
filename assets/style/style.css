@@ -336,6 +336,21 @@ td:nth-child(3) .timeCell {
   color: #0f172a;
 }
 
+.editBtn.menuBtn,
+.editBtn.menuBtn:hover {
+  width: 32px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.editBtn.menuBtn:hover {
+  color: var(--text);
+}
+
 .saveBtn {
   background: rgba(37, 99, 235, 0.08); /* primary薄め */
   border-color: rgba(37, 99, 235, 0.35);
@@ -566,4 +581,59 @@ td:nth-child(3) .timeCell {
 .duplicateTable tbody td:last-child {
   background: rgba(37, 99, 235, 0.06);
   color: var(--primary);
+}
+
+.sessionActionDialogCard,
+.deleteSessionDialogCard {
+  width: min(92%, 400px);
+}
+
+.sessionSummary {
+  margin: 14px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sessionSummary div {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.sessionSummary div:last-child {
+  border-bottom: 0;
+}
+
+.sessionSummary dt,
+.sessionSummary dd {
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.sessionSummary dt {
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.sessionSummary dd {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+  padding: 20px;
+}
+
+.deleteWarning {
+  margin: 14px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
 }
