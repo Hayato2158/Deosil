@@ -138,7 +138,7 @@
         // });
     };
 
-    // mutations（home.js が使う想定）
+    // mutations（勤怠データはSupabaseを正とし、IndexedDBには書き込まない）
     window.App.saveSession = async function saveSession(session) {
         if (!session?.id) return { ok: false, message: "セッションIDが不正です。" };
 
@@ -167,7 +167,6 @@
         if (already) return { ok: false, message: "本日は既に記録があります（1日1勤務）。" };
 
         const session = {
-            id: window.App.uuid(),
             userId: window.App.userId,
             workDate,
             startAt: Date.now(),
