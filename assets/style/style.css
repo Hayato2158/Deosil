@@ -173,7 +173,7 @@ h1 {
   color: #fff;
 }
 .btnLeave {
-  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  background: linear-gradient(180deg, #16a34a 0%, var(--ok) 100%);
   color: #fff;
 }
 
