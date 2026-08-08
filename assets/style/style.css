@@ -444,3 +444,122 @@ td:nth-child(3) .timeCell {
 .container {
   padding-bottom: 90px;
 }
+
+/* Data: manual session entry */
+.fabAdd {
+  position: fixed;
+  right: 20px;
+  bottom: calc(108px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #3b82f6 0%, var(--primary) 100%);
+  color: #fff;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+}
+
+.fabAdd:active {
+  transform: translateY(1px);
+}
+
+.entryDialogCard {
+  text-align: left;
+}
+
+.entryDialogCard h3 {
+  text-align: center;
+}
+
+.formField {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.formField input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.formField input:focus {
+  border-color: var(--primary);
+  outline: 3px solid rgba(37, 99, 235, 0.15);
+}
+
+.formError {
+  min-height: 1.2em;
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+  text-align: center;
+}
+
+.entryActions {
+  flex-direction: row;
+}
+
+.entryActions .btn {
+  width: 50%;
+}
+
+.duplicateDialogCard {
+  width: min(92%, 460px);
+}
+
+.duplicateTableWrap {
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.duplicateTable {
+  table-layout: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.duplicateTable th,
+.duplicateTable td {
+  padding: 10px 8px;
+  white-space: nowrap;
+}
+
+.duplicateTable thead th {
+  position: static;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.duplicateTable tbody th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+}
+
+.duplicateTable tbody td {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.duplicateTable tbody td:last-child {
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--primary);
+}

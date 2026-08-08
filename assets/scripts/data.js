@@ -4,7 +4,8 @@
 
 (async function initData() {
     await window.App.init();
-    await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
+    const user = await window.App.requireLogin(); // 未ログインなら login.html へ飛ばす
+    if (!user) return;
 
     const titleEl = document.getElementById("dataTitle");
     const monthTbody = document.getElementById("monthTbody");
@@ -15,11 +16,32 @@
     const btnPrev = document.getElementById("btnPrevMonth");
     const btnNext = document.getElementById("btnNextMonth");
 
+    const btnAddSession = document.getElementById("btnAddSession");
+    const entryDialog = document.getElementById("entryDialog");
+    const entryForm = document.getElementById("entryForm");
+    const entryWorkDate = document.getElementById("entryWorkDate");
+    const entryStartTime = document.getElementById("entryStartTime");
+    const entryEndTime = document.getElementById("entryEndTime");
+    const entryError = document.getElementById("entryError");
+    const entrySave = document.getElementById("entrySave");
+    const entryCancel = document.getElementById("entryCancel");
+    const duplicateDialog = document.getElementById("duplicateDialog");
+    const duplicateYes = document.getElementById("duplicateYes");
+    const duplicateNo = document.getElementById("duplicateNo");
+    const duplicateOldDate = document.getElementById("duplicateOldDate");
+    const duplicateNewDate = document.getElementById("duplicateNewDate");
+    const duplicateOldStart = document.getElementById("duplicateOldStart");
+    const duplicateNewStart = document.getElementById("duplicateNewStart");
+    const duplicateOldEnd = document.getElementById("duplicateOldEnd");
+    const duplicateNewEnd = document.getElementById("duplicateNewEnd");
+
     // Dataページ以外なら何もしない
     if (!monthTbody || !sumOverText || !sumUnderText || !sumNetOverText) return;
 
     let currentYear;
     let currentMonth;
+    let pendingDuplicate = null;
+    let isSaving = false;
 
     function setCurrentToNow() {
         const now = new Date();
@@ -56,6 +78,97 @@
         if (parts.length < 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
         const [y, m, d] = workDate.split("-").map((v) => Number(v));
         return new Date(y, m - 1, d, parts[0], parts[1], 0, 0).getTime();
+    }
+
+    function showEntryError(message = "") {
+        if (entryError) entryError.textContent = message;
+    }
+
+    function openEntryDialog() {
+        if (!entryDialog || !entryWorkDate || !entryStartTime || !entryEndTime) return;
+        entryWorkDate.value = window.App.formatDate(new Date());
+        entryStartTime.value = "";
+        entryEndTime.value = "";
+        showEntryError();
+        entryDialog.classList.remove("hidden");
+        entryWorkDate.focus();
+    }
+
+    function closeEntryDialog() {
+        entryDialog?.classList.add("hidden");
+        showEntryError();
+    }
+
+    function showDuplicateDialog(existing, values) {
+        pendingDuplicate = { existing, values };
+
+        if (duplicateOldDate) duplicateOldDate.textContent = existing.workDate || "---";
+        if (duplicateNewDate) duplicateNewDate.textContent = values.workDate || "---";
+        if (duplicateOldStart) duplicateOldStart.textContent = existing.startAt ? window.App.formatTime(existing.startAt) : "--:--";
+        if (duplicateNewStart) duplicateNewStart.textContent = values.startAt ? window.App.formatTime(values.startAt) : "--:--";
+        if (duplicateOldEnd) duplicateOldEnd.textContent = existing.endAt ? window.App.formatTime(existing.endAt) : "--:--";
+        if (duplicateNewEnd) duplicateNewEnd.textContent = values.endAt ? window.App.formatTime(values.endAt) : "--:--";
+
+        entryDialog?.classList.add("hidden");
+        duplicateDialog?.classList.remove("hidden");
+        duplicateYes?.focus();
+    }
+
+    function returnToEntryDialog() {
+        pendingDuplicate = null;
+        duplicateDialog?.classList.add("hidden");
+        entryDialog?.classList.remove("hidden");
+        entryWorkDate?.focus();
+    }
+
+    function readEntryValues() {
+        const workDate = entryWorkDate?.value || "";
+        const startTime = entryStartTime?.value || "";
+        const endTime = entryEndTime?.value || "";
+        const startAt = epochFromWorkDateTime(workDate, startTime);
+        const endAt = epochFromWorkDateTime(workDate, endTime);
+        return { workDate, startAt, endAt };
+    }
+
+    function setSaving(value) {
+        isSaving = value;
+        if (entrySave) entrySave.disabled = value;
+        if (duplicateYes) duplicateYes.disabled = value;
+        if (duplicateNo) duplicateNo.disabled = value;
+    }
+
+    async function saveEntry(values, existing = null) {
+        if (isSaving) return;
+        setSaving(true);
+
+        const session = {
+            ...(existing || {}),
+            userId: window.App.userId,
+            workDate: values.workDate,
+            startAt: values.startAt,
+            endAt: values.endAt,
+            state: "DONE",
+        };
+
+        try {
+            const result = await window.App.saveSession(session);
+            if (!result?.ok) throw new Error(result?.message || "保存に失敗しました");
+
+            const [year, month] = values.workDate.split("-").map(Number);
+            currentYear = year;
+            currentMonth = month;
+            pendingDuplicate = null;
+            duplicateDialog?.classList.add("hidden");
+            closeEntryDialog();
+            await renderMonth(currentYear, currentMonth);
+        } catch (error) {
+            console.error("Failed to save session", error);
+            duplicateDialog?.classList.add("hidden");
+            entryDialog?.classList.remove("hidden");
+            showEntryError(error?.message || "保存に失敗しました");
+        } finally {
+            setSaving(false);
+        }
     }
 
     async function renderMonth(year, month) {
@@ -224,4 +337,43 @@
             await renderMonth(currentYear, currentMonth);
         });
     }
+
+    btnAddSession?.addEventListener("click", openEntryDialog);
+    entryCancel?.addEventListener("click", closeEntryDialog);
+
+    entryForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (isSaving || !entryForm.reportValidity()) return;
+
+        showEntryError();
+        const values = readEntryValues();
+        if (!values.workDate || values.startAt == null || values.endAt == null) {
+            showEntryError("日付、出勤時間、退勤時間を入力してください");
+            return;
+        }
+        if (values.endAt < values.startAt) {
+            showEntryError("退勤時間は出勤時間より後にしてください");
+            return;
+        }
+
+        try {
+            const existing = await window.App.getSessionByDate(values.workDate);
+            if (existing) {
+                showDuplicateDialog(existing, values);
+                return;
+            }
+            await saveEntry(values);
+        } catch (error) {
+            console.error("Failed to check existing session", error);
+            showEntryError("データの確認に失敗しました。もう一度お試しください");
+        }
+    });
+
+    duplicateYes?.addEventListener("click", async () => {
+        if (!pendingDuplicate) return;
+        const { existing, values } = pendingDuplicate;
+        await saveEntry(values, existing);
+    });
+
+    duplicateNo?.addEventListener("click", returnToEntryDialog);
 })();

@@ -86,6 +86,73 @@
         </nav>
     </main>
 
+    <button id="btnAddSession" class="fabAdd" type="button" aria-label="勤怠データを追加">＋</button>
+
+    <div id="entryDialog" class="dialog hidden" role="dialog" aria-modal="true" aria-labelledby="entryDialogTitle">
+        <div class="dialogCard entryDialogCard">
+            <h3 id="entryDialogTitle">勤怠データを追加</h3>
+            <form id="entryForm">
+                <label class="formField">
+                    <span>日付</span>
+                    <input id="entryWorkDate" type="date" required />
+                </label>
+                <label class="formField">
+                    <span>出勤時間</span>
+                    <input id="entryStartTime" type="time" required />
+                </label>
+                <label class="formField">
+                    <span>退勤時間</span>
+                    <input id="entryEndTime" type="time" required />
+                </label>
+                <p id="entryError" class="formError" role="alert"></p>
+                <div class="dialogActions entryActions">
+                    <button class="btn primary" id="entrySave" type="submit">保存</button>
+                    <button class="btn cancel" id="entryCancel" type="button">キャンセル</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="duplicateDialog" class="dialog hidden" role="alertdialog" aria-modal="true"
+        aria-labelledby="duplicateDialogTitle">
+        <div class="dialogCard duplicateDialogCard">
+            <h3 id="duplicateDialogTitle">すでにデータがあります</h3>
+            <div class="duplicateTableWrap">
+                <table class="duplicateTable" aria-label="勤怠データの変更内容">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>元のデータ</th>
+                            <th>更新後</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">日付</th>
+                            <td id="duplicateOldDate">---</td>
+                            <td id="duplicateNewDate">---</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">出勤</th>
+                            <td id="duplicateOldStart">--:--</td>
+                            <td id="duplicateNewStart">--:--</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">退勤</th>
+                            <td id="duplicateOldEnd">--:--</td>
+                            <td id="duplicateNewEnd">--:--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>入力した内容で更新しますか？</p>
+            <div class="dialogActions">
+                <button class="btn primary" id="duplicateYes" type="button">はい</button>
+                <button class="btn cancel" id="duplicateNo" type="button">いいえ</button>
+            </div>
+        </div>
+    </div>
+
     <div id="issueDialog" class="dialog hidden">
         <div class="dialogCard">
             <h3>ご要望・不具合報告</h3>
