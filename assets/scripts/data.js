@@ -223,8 +223,7 @@
 
     function sessionTypeLabel(session) {
         if (isLeaveSession(session)) return "休暇";
-        if (session?.state === "WORKING") return "勤務中";
-        return "勤怠";
+        return "出勤";
     }
 
     function setSessionSummary(session, elements) {
@@ -241,7 +240,10 @@
         if (sessionActionDate) {
             sessionActionDate.textContent = `${formatMonthDay(session.workDate)}${weekday ? `（${weekday}）` : ""}`;
         }
-        if (sessionActionType) sessionActionType.textContent = sessionTypeLabel(session);
+        if (sessionActionType) {
+            sessionActionType.textContent = sessionTypeLabel(session);
+            sessionActionType.classList.toggle("isLeave", isLeaveSession(session));
+        }
         if (sessionActionStart) sessionActionStart.textContent = session.startAt ? window.App.formatTime(session.startAt) : "--:--";
         if (sessionActionEnd) sessionActionEnd.textContent = session.endAt ? window.App.formatTime(session.endAt) : "--:--";
         if (sessionActionWork) sessionActionWork.textContent = workMin == null ? "--:--" : window.App.formatHM(workMin);
