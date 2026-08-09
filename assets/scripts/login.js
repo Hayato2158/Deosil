@@ -1,5 +1,5 @@
 (async function initLogin() {
-    await window.App.init(); // DB + Supabase 初期化（後述の app.js 変更込み）
+    await window.App.init();
 
     const emailEl = document.getElementById("loginEmail");
     const passEl = document.getElementById("loginPassword");
@@ -7,7 +7,13 @@
     const errEl = document.getElementById("loginError");
 
     // すでにログイン済みなら Home へ
-    const already = await window.App.getAuthedUser();
+    let already = null;
+    try {
+        already = await window.App.getAuthedUser();
+    } catch (error) {
+        console.warn("Authentication status check failed", error);
+        errEl.textContent = "ログイン状態を確認できませんでした。必要であれば再度ログインしてください。";
+    }
     if (already) {
         location.href = "./home.html"; // home.html にしたいならここを変更
         return;
@@ -26,9 +32,12 @@
             return;
         }
 
-        const { error } = await window.App.supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
+        try {
+            await window.App.apiFetch("./api/auth/login", {
+                method: "POST",
+                body: JSON.stringify({ email, password }),
+            });
+        } catch (error) {
             errEl.textContent = error.message || "ログインに失敗しました。";
             btnEl.disabled = false;
             return;

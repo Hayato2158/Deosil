@@ -90,7 +90,6 @@
     window.App = window.App || {};
 
     // 状態
-    window.App.supabase = window.App.supabase ?? null;
     window.App.db = window.App.db ?? null;
     window.App.userId = window.App.userId ?? null;
     window.App.basePath = window.App.basePath ?? "";
@@ -105,25 +104,22 @@
     // init（home.js / data.js / login.js から呼ぶ）
     window.App.init = async function init() {
         window.App.basePath = applyBasePath();
+
+        // 旧GitHub Pages版が保存したSupabaseセッションを移行時に確実に破棄する。
+        try {
+            const legacyPrefix = "sb-bllysyzdusuregqlraoi-auth-token";
+            for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+                const key = localStorage.key(index);
+                if (key?.startsWith(legacyPrefix)) localStorage.removeItem(key);
+            }
+        } catch (error) {
+            console.warn("Legacy auth storage cleanup failed", error);
+        }
+
         // IndexedDB 初期化（idb.js が提供）
         if (!window.App.db) {
             if (!window.App.openDb) throw new Error("openDb is not defined. Did you load idb.js before core.js?");
             window.App.db = await window.App.openDb();
-        }
-
-        // Supabase 初期化（1回だけ）
-        if (!window.App.supabase) {
-            const url = window.DEOSIL_ENV?.SUPABASE_URL;
-            const anon = window.DEOSIL_ENV?.SUPABASE_ANON_KEY;
-            if (url && anon && window.supabase) {
-                window.App.supabase = window.supabase.createClient(url, anon);
-            }
-        }
-
-        if (window.App.supabase) {
-            const { data: { session }, error } = await window.App.supabase.auth.getSession();
-            if (error) console.warn(error);
-            window.App.userId = session?.user?.id ?? null;
         }
 
         await registerServiceWorker();
@@ -132,7 +128,22 @@
     // 認証ガード（sb.js の getAuthedUser に依存）
     window.App.requireLogin = async function requireLogin() {
         if (!window.App.getAuthedUser) throw new Error("getAuthedUser is not defined. Did you load sb.js?");
-        const user = await window.App.getAuthedUser();
+        let user;
+        try {
+            user = await window.App.getAuthedUser();
+        } catch (error) {
+            console.warn("Authentication status check failed", error);
+            let message = document.getElementById("authStatusError");
+            if (!message) {
+                message = document.createElement("p");
+                message.id = "authStatusError";
+                message.className = "authStatusError";
+                message.setAttribute("role", "alert");
+                document.body.prepend(message);
+            }
+            message.textContent = "ログイン状態を確認できませんでした。通信状態を確認して再読み込みしてください。";
+            return null;
+        }
 
         if (!user) {
             const isLoginPage = location.pathname.endsWith("/login.html");
@@ -177,26 +188,10 @@ async function subscribePushAndSave() {
     const auth = json.keys?.auth;
     if (!endpoint || !p256dh || !auth) throw new Error("invalid subscription keys");
 
-    const client = window.App?.supabase;
-    if (!client) throw new Error("supabase client not initialized. run App.init() first.");
-
-    const { data: { user }, error: userErr } = await client.auth.getUser();
-    if (userErr) throw userErr;
-    if (!user) throw new Error("not logged in");
-
-    const { error } = await client
-        .from("push_subscriptions")
-        .upsert({
-            user_id: user.id,
-            endpoint,
-            p256dh,
-            auth,
-            user_agent: navigator.userAgent,
-        }, { onConflict: "user_id,endpoint" });
-
-    if (error) throw error;
+    if (!window.App?.apiFetch) throw new Error("BFF API client is not initialized.");
+    await window.App.apiFetch("./api/push-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ endpoint, p256dh, auth }),
+    });
     console.log("saved push subscription");
-
-    console.log({ endpoint, p256dh, auth });
-
 }

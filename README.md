@@ -1,5 +1,7 @@
 # Deosil(デオシル) ～勤怠管理補助アプリ～
 
+> Cloudflare Workers Static Assets + BFFへの移行手順は[docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)を参照してください。
+
 ## 権利・ライセンスについて
 
 本プロジェクト **Deosil** に関する **すべての権利（著作権・知的財産権等）は、開発者である[Hayato2158](https://github.com/Hayato2158)に帰属します**。

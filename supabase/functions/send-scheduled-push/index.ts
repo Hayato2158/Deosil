@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import webpush from "npm:web-push";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.112.2";
+import webpush from "npm:web-push@3.6.7";
 
 /**
  * JSTの「今日」を YYYY-MM-DD で返す（UTC+9で日付切替）
@@ -15,20 +15,62 @@ function jstWorkDate(): string {
 
 type SubRow = { user_id: string; endpoint: string; p256dh: string; auth: string };
 
+function constantTimeEqual(left: string, right: string): boolean {
+  const leftBytes = new TextEncoder().encode(left);
+  const rightBytes = new TextEncoder().encode(right);
+  let difference = leftBytes.length ^ rightBytes.length;
+  const length = Math.max(leftBytes.length, rightBytes.length);
+  for (let index = 0; index < length; index++) {
+    difference |= (leftBytes[index] ?? 0) ^ (rightBytes[index] ?? 0);
+  }
+  return difference === 0;
+}
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "cache-control": "no-store",
+      "content-type": "application/json; charset=utf-8",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
+
 serve(async (req) => {
   try {
+    if (req.method !== "POST") {
+      return new Response(null, { status: 405, headers: { allow: "POST", "cache-control": "no-store" } });
+    }
+
+    const CRON_SECRET = Deno.env.get("CRON_SECRET");
+    const providedSecret = req.headers.get("x-cron-secret") ?? "";
+    if (!CRON_SECRET) {
+      console.error("CRON_SECRET is missing");
+      return json({ error: "server_not_configured" }, 500);
+    }
+    if (!providedSecret || !constantTimeEqual(providedSecret, CRON_SECRET)) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY");
     const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY");
 
-    if (!SUPABASE_URL || !SERVICE_ROLE) return new Response("missing SUPABASE env", { status: 500 });
-    if (!VAPID_PUBLIC || !VAPID_PRIVATE) return new Response("missing VAPID env", { status: 500 });
+    if (!SUPABASE_URL || !SERVICE_ROLE || !VAPID_PUBLIC || !VAPID_PRIVATE) {
+      console.error("Required Supabase or VAPID environment is missing");
+      return json({ error: "server_not_configured" }, 500);
+    }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     const url = new URL(req.url);
-    const mode = (url.searchParams.get("mode") ?? "morning") as "morning" | "night" | "regular";
+    const rawMode = url.searchParams.get("mode") ?? "morning";
+    if (!(["morning", "night", "regular"] as const).includes(rawMode as "morning" | "night" | "regular")) {
+      return json({ error: "invalid_mode" }, 400);
+    }
+    const mode = rawMode as "morning" | "night" | "regular";
     const workDate = jstWorkDate();
 
     // ---- 母集団：通知できるユーザー（enabled=true）に寄せる（スケール優先） ----
@@ -37,13 +79,14 @@ serve(async (req) => {
       .select("user_id")
       .eq("enabled", true);
 
-    if (esErr) return new Response(`push_subscriptions select failed: ${esErr.message}`, { status: 500 });
+    if (esErr) {
+      console.error("push_subscriptions select failed", esErr.code);
+      return json({ error: "database_error" }, 500);
+    }
 
     const candidateUserIds = Array.from(new Set((enabledSubs ?? []).map((x: any) => x.user_id)));
     if (candidateUserIds.length === 0) {
-      return new Response(JSON.stringify({ ok: true, mode, workDate, picked: 0, sent: 0, failed: 0, marked: 0 }), {
-        headers: { "Content-Type": "application/json" },
-      });
+      return json({ ok: true, mode, workDate, picked: 0, sent: 0, failed: 0, marked: 0 });
     }
 
     // ---- 既送信（同日同kind）をまとめて取る ----
@@ -54,7 +97,10 @@ serve(async (req) => {
       .eq("kind", mode)
       .in("user_id", candidateUserIds);
 
-    if (mErr) return new Response(`marks select failed: ${mErr.message}`, { status: 500 });
+    if (mErr) {
+      console.error("notification marks select failed", mErr.code);
+      return json({ error: "database_error" }, 500);
+    }
 
     const already = new Set((marks ?? []).map((x: any) => x.user_id));
 
@@ -77,7 +123,10 @@ serve(async (req) => {
         .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
-      if (sErr) return new Response(`sessions select failed: ${sErr.message}`, { status: 500 });
+      if (sErr) {
+        console.error("morning sessions select failed", sErr.code);
+        return json({ error: "database_error" }, 500);
+      }
 
       const byUser = new Map<string, { state: string | null }>();
       for (const row of todays ?? []) {
@@ -107,11 +156,14 @@ serve(async (req) => {
         .from("sessions")
         .select("user_id")
         .eq("work_date", workDate)
-        .eq("state", "working")
+        .eq("state", "WORKING")
         .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
-      if (wErr) return new Response(`sessions select failed: ${wErr.message}`, { status: 500 });
+      if (wErr) {
+        console.error("night sessions select failed", wErr.code);
+        return json({ error: "database_error" }, 500);
+      }
 
       const workingIds = Array.from(new Set((working ?? []).map((x: any) => x.user_id)));
       targetUserIds = workingIds.filter((uid) => !already.has(uid));
@@ -130,11 +182,14 @@ serve(async (req) => {
         .from("sessions")
         .select("user_id,start_at,end_at,state")
         .eq("work_date", workDate)
-        .eq("state", "working")
+        .eq("state", "WORKING")
         .is("deleted_at", null)
         .in("user_id", candidateUserIds);
 
-      if (wErr) return new Response(`sessions select failed: ${wErr.message}`, { status: 500 });
+      if (wErr) {
+        console.error("regular sessions select failed", wErr.code);
+        return json({ error: "database_error" }, 500);
+      }
 
       const nowMs = Date.now();
       const eightHoursMs = 8 * 60 * 60 * 1000;
@@ -160,13 +215,11 @@ serve(async (req) => {
 
       targetUserIds = Array.from(new Set(dueIds));
     } else {
-      return new Response("mode must be morning|night|regular", { status: 400 });
+      return json({ error: "invalid_mode" }, 400);
     }
 
     if (targetUserIds.length === 0) {
-      return new Response(JSON.stringify({ ok: true, mode, workDate, picked: 0, sent: 0, failed: 0, marked: 0 }), {
-        headers: { "Content-Type": "application/json" },
-      });
+      return json({ ok: true, mode, workDate, picked: 0, sent: 0, failed: 0, marked: 0 });
     }
 
     // ---- 対象ユーザーの購読（enabled=true）のみ取得 ----
@@ -176,7 +229,10 @@ serve(async (req) => {
       .eq("enabled", true)
       .in("user_id", targetUserIds);
 
-    if (subErr) return new Response(`subs select failed: ${subErr.message}`, { status: 500 });
+    if (subErr) {
+      console.error("target subscriptions select failed", subErr.code);
+      return json({ error: "database_error" }, 500);
+    }
 
     const byUserSubs = new Map<string, Array<{ endpoint: string; p256dh: string; auth: string }>>();
     for (const s of (subs ?? []) as any[]) {
@@ -209,7 +265,10 @@ serve(async (req) => {
           anyOk = true;
         } catch (e) {
           failed++;
-          console.error("push failed", uid, String(e));
+          const status = (e as { statusCode?: number; status?: number })?.statusCode
+            ?? (e as { status?: number })?.status
+            ?? "unknown";
+          console.error("push failed", status);
         }
       }
       if (anyOk) successUserIds.push(uid);
@@ -229,24 +288,21 @@ serve(async (req) => {
 
       if (upErr) {
         console.error("upsert marks failed", upErr);
-        return new Response("upsert marks failed", { status: 500 });
+        return json({ error: "database_error" }, 500);
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        mode,
-        workDate,
-        picked: targetUserIds.length,
-        sent,
-        failed,
-        marked: successUserIds.length,
-      }),
-      { headers: { "Content-Type": "application/json" } },
-    );
+    return json({
+      ok: true,
+      mode,
+      workDate,
+      picked: targetUserIds.length,
+      sent,
+      failed,
+      marked: successUserIds.length,
+    });
   } catch (e) {
     console.error("fatal", e);
-    return new Response("Internal Server Error", { status: 500 });
+    return json({ error: "internal_error" }, 500);
   }
 });

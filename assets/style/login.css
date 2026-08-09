@@ -154,3 +154,6 @@ h1::after {
     gap: 14px;
   }
 }
+.loginError {
+    color: #991b1b;
+}
