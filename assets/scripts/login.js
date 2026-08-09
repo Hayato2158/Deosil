@@ -1,5 +1,5 @@
 (async function initLogin() {
-    await window.App.init(); // DB + Supabase 初期化（後述の app.js 変更込み）
+    await window.App.init();
 
     const emailEl = document.getElementById("loginEmail");
     const passEl = document.getElementById("loginPassword");
@@ -26,9 +26,12 @@
             return;
         }
 
-        const { error } = await window.App.supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
+        try {
+            await window.App.apiFetch("./api/auth/login", {
+                method: "POST",
+                body: JSON.stringify({ email, password }),
+            });
+        } catch (error) {
             errEl.textContent = error.message || "ログインに失敗しました。";
             btnEl.disabled = false;
             return;

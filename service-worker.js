@@ -34,8 +34,12 @@ self.addEventListener("notificationclick", (event) => {
     event.waitUntil((async () => {
         // URL を正規化
         const normalized = String(rawUrl).replace(/^\/+/, "");
-        // ターゲット URL を決定
-        const targetUrl = new URL(normalized, self.registration.scope).toString();
+        const candidateUrl = new URL(normalized, self.registration.scope);
+        const scopeUrl = new URL(self.registration.scope);
+        // Push payloadから外部サイトへ誘導されないよう、同一オリジン・同一scopeだけを許可する。
+        const targetUrl = candidateUrl.origin === scopeUrl.origin && candidateUrl.href.startsWith(scopeUrl.href)
+            ? candidateUrl.toString()
+            : new URL("home.html", self.registration.scope).toString();
 
         const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
 

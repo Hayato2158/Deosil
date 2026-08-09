@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./home.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="./assets/style/loader.css" />
+    <link rel="stylesheet" href="./assets/style/migration.css" />
     <title>Deosil</title>
 
     <!-- favicon -->
@@ -24,7 +24,43 @@
 </head>
 
 <body>
-    <div class="loader"></div>
+    <div id="entryLoader" class="loader" aria-label="読み込み中"></div>
+
+    <main id="migrationNotice" class="migration" hidden>
+        <article class="migrationCard">
+            <p class="migrationBadge">重要なお知らせ</p>
+            <div class="migrationMark" aria-hidden="true">D</div>
+            <h1>Deosilは新しい環境へ<br>移行しました</h1>
+            <p class="migrationLead">
+                セキュリティ強化のため、このURLでのサービス提供を終了しました。
+                今後は以下の新しいDeosilをご利用ください。
+            </p>
+
+            <a class="migrationButton" href="https://deosil.hayato2158.workers.dev/">
+                新しいDeosilを開く
+                <span aria-hidden="true">→</span>
+            </a>
+            <p class="migrationUrl">deosil.hayato2158.workers.dev</p>
+
+            <div class="migrationNote">
+                <h2>移行後のお願い</h2>
+                <p>新しい環境で再度ログインし、ブックマークやホーム画面の登録を更新してください。</p>
+            </div>
+
+            <p class="migrationSecurity">
+                このページを開いた際に、旧環境のブラウザ内ログイン情報を削除しています。
+            </p>
+        </article>
+    </main>
+
+    <noscript>
+        <p class="migrationNoScript">
+            Deosilは移行しました。
+            <a href="https://deosil.hayato2158.workers.dev/">新しいDeosilを開く</a>
+        </p>
+    </noscript>
+
+    <script src="./assets/scripts/entry.js"></script>
 </body>
 
 </html>

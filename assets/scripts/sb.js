@@ -1,65 +1,46 @@
 /* =========================
-   sb.js（Supabase：Auth/Sync）
+   sb.js（BFF API：Auth/Sync）
    ========================= */
 
 (() => {
     window.App = window.App || {};
 
-    // 認証ユーザー取得
+    async function apiFetch(path, options = {}) {
+        const headers = new Headers(options.headers || {});
+        headers.set("Accept", "application/json");
+        if (options.body && !headers.has("Content-Type")) {
+            headers.set("Content-Type", "application/json");
+        }
+
+        const response = await fetch(path, {
+            ...options,
+            headers,
+            credentials: "same-origin",
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const data = contentType.includes("application/json") ? await response.json() : null;
+        if (!response.ok) {
+            const error = new Error(data?.error || "サーバー処理に失敗しました。");
+            error.status = response.status;
+            throw error;
+        }
+        return data;
+    }
+
+    window.App.apiFetch = apiFetch;
+
     window.App.getAuthedUser = async function getAuthedUser() {
-        if (!window.App.supabase) return null;
-        const { data: { user } } = await window.App.supabase.auth.getUser();
-        return user ?? null;
-    };
-
-    // Supabaseを正として保存し、DBが確定したIDを含むセッションを返す
-    window.App.upsertSessionRemote = async function upsertSessionRemote(session) {
-        const supabase = window.App.supabase;
-        if (!supabase) {
-            return { ok: false, message: "Supabaseに接続できません。" };
-        }
-
         try {
-            const { data: sdata, error: serr } = await supabase.auth.getSession();
-            if (serr) {
-                console.warn("[sync] getSession error:", serr);
-                return { ok: false, message: "認証情報の確認に失敗しました。再ログインしてください。" };
-            }
-            const sbSession = sdata?.session;
-
-            if (!sbSession?.user) {
-                return { ok: false, message: "ログイン情報が確認できません。再ログインしてください。" };
-            }
-
-            const row = {
-                user_id: sbSession.user.id,
-                work_date: session.workDate,
-                start_at: session.startAt ? new Date(session.startAt).toISOString() : null,
-                end_at: session.endAt ? new Date(session.endAt).toISOString() : null,
-                state: session.state,
-                deleted_at: null,
-            };
-
-            const { data, error } = await supabase
-                .from("sessions")
-                .upsert(row, { onConflict: "user_id,work_date" })
-                .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
-                .single();
-
-            if (error) {
-                console.warn("[sync] upsert failed:", error);
-                return { ok: false, message: "保存に失敗しました。通信状態を確認して、もう一度お試しください。" };
-            }
-
-            return { ok: true, session: sbRowToSession(data) };
+            const data = await apiFetch("./api/auth/me");
+            return data?.user ?? null;
         } catch (error) {
-            console.warn("[sync] unexpected save error:", error);
-            return { ok: false, message: "保存に失敗しました。通信状態を確認して、もう一度お試しください。" };
+            if (error?.status !== 401) console.warn("[auth] me failed:", error);
+            window.App.userId = null;
+            return null;
         }
     };
 
-    // Supabase の行データを session オブジェクトに変換
-    function sbRowToSession(row) {
+    function apiRowToSession(row) {
         return {
             id: row.id,
             userId: row.user_id ?? window.App.userId,
@@ -71,114 +52,66 @@
         };
     }
 
-    //指定日のセッション取得（リモート）
-    window.App.getSessionByDateRemote = async function (workDate) {
-        const supabase = window.App.supabase;
-        if (!supabase) return null;
-
-        const user = await window.App.getAuthedUser();
-        if (!user) return null;
-
-        const { data, error } = await supabase
-            .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
-            .eq("user_id", user.id)
-            .eq("work_date", workDate)
-            .is("deleted_at", null)
-            .limit(1);
-
-        if (error) {
-            console.warn("[sync] getSessionByDateRemote error:", error);
-            return null;
+    window.App.upsertSessionRemote = async function upsertSessionRemote(session) {
+        try {
+            const data = await apiFetch("./api/sessions", {
+                method: "POST",
+                body: JSON.stringify({
+                    workDate: session.workDate,
+                    startAt: session.startAt ?? null,
+                    endAt: session.endAt ?? null,
+                    state: session.state,
+                }),
+            });
+            return { ok: true, session: apiRowToSession(data.session) };
+        } catch (error) {
+            console.warn("[sync] save failed:", error);
+            return { ok: false, message: error.message || "保存に失敗しました。" };
         }
-        return data?.[0] ? sbRowToSession(data[0]) : null;
     };
 
-    //勤務中セッション 取得（リモート）
-    window.App.getWorkingSessionRemote = async function () {
-        const supabase = window.App.supabase;
-        if (!supabase) return null;
-
-        const user = await window.App.getAuthedUser();
-        if (!user) return null;
-
-        const { data, error } = await supabase
-            .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
-            .eq("user_id", user.id)
-            .eq("state", "WORKING")
-            .is("deleted_at", null)
-            .limit(1);
-
-        if (error) {
-            console.warn("[sync] getWorkingSessionRemote error:", error);
+    window.App.getSessionByDateRemote = async function getSessionByDateRemote(workDate) {
+        try {
+            const data = await apiFetch(`./api/sessions?workDate=${encodeURIComponent(workDate)}`);
+            return data?.session ? apiRowToSession(data.session) : null;
+        } catch (error) {
+            console.warn("[sync] get by date failed:", error);
             return null;
         }
-        return data?.[0] ? sbRowToSession(data[0]) : null;
     };
 
-    window.App.listSessionInMonthRemote = async function (year, month1to12) {
-        const supabase = window.App.supabase;
-        if (!supabase) return null;
-
-        const user = await window.App.getAuthedUser();
-        if (!user) return null;
-
-        const start = `${year}-${String(month1to12).padStart(2, "0")}-01`;
-        const endDate = new Date(year, month1to12, 0);
-        const end = `${year}-${String(month1to12).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
-
-        const { data, error } = await supabase
-            .from("sessions")
-            .select("id, user_id, work_date, start_at, end_at, state, deleted_at")
-            .eq("user_id", user.id)
-            .is("deleted_at", null)
-            .gte("work_date", start)
-            .lte("work_date", end)
-            .order("work_date", { ascending: true });
-
-        if (error) {
-            console.warn("[sync] listSessionInMonthRemote failed:", error);
+    window.App.getWorkingSessionRemote = async function getWorkingSessionRemote() {
+        try {
+            const data = await apiFetch("./api/sessions?state=WORKING");
+            return data?.session ? apiRowToSession(data.session) : null;
+        } catch (error) {
+            console.warn("[sync] get working failed:", error);
             return null;
         }
+    };
 
-        return (data || []).map(sbRowToSession);
+    window.App.listSessionInMonthRemote = async function listSessionInMonthRemote(year, month1to12) {
+        try {
+            const month = `${year}-${String(month1to12).padStart(2, "0")}`;
+            const data = await apiFetch(`./api/sessions?month=${encodeURIComponent(month)}`);
+            return (data?.sessions || []).map(apiRowToSession);
+        } catch (error) {
+            console.warn("[sync] list month failed:", error);
+            return null;
+        }
     };
 
     window.App.softDeleteSessionRemote = async function softDeleteSessionRemote(sessionId) {
-        const supabase = window.App.supabase;
-        if (!supabase || !sessionId) {
-            return { ok: false, message: "削除対象を確認できませんでした。" };
-        }
-
+        if (!sessionId) return { ok: false, message: "削除対象を確認できませんでした。" };
         try {
-            const user = await window.App.getAuthedUser();
-            if (!user) {
-                return { ok: false, message: "ログイン情報が確認できません。再ログインしてください。" };
-            }
-
-            const { data, error } = await supabase
-                .from("sessions")
-                .update({ deleted_at: new Date().toISOString() })
-                .eq("id", sessionId)
-                .eq("user_id", user.id)
-                .is("deleted_at", null)
-                .select("id")
-                .maybeSingle();
-
-            if (error) {
-                console.warn("[sync] soft delete failed:", error);
-                return { ok: false, message: "削除に失敗しました。通信状態を確認して、もう一度お試しください。" };
-            }
-            if (!data) {
-                return { ok: false, message: "削除対象が見つかりませんでした。一覧を再読み込みしてください。" };
-            }
-
+            await apiFetch(`./api/sessions/${encodeURIComponent(sessionId)}/soft-delete`, {
+                method: "PATCH",
+                body: JSON.stringify({}),
+            });
             return { ok: true };
         } catch (error) {
-            console.warn("[sync] unexpected soft delete error:", error);
-            return { ok: false, message: "削除に失敗しました。通信状態を確認して、もう一度お試しください。" };
+            console.warn("[sync] soft delete failed:", error);
+            return { ok: false, message: error.message || "削除に失敗しました。" };
         }
     };
-
 })();

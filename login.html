@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="./assets/scripts/legacy-redirect.js"></script>
     <title>Deosil - Login</title>
     <link rel="stylesheet" href="./assets/style/login.css" />
 
@@ -40,7 +41,7 @@
                     <input id="loginPassword" type="password" autocomplete="current-password" placeholder="********" />
                 </label>
 
-                <p id="loginError" class="hint" style="color:#991b1b;"></p>
+                <p id="loginError" class="hint loginError"></p>
 
                 <div class="actions">
                     <button id="btnLogin" class="btn btnStart" type="button">ログイン</button>
@@ -48,8 +49,6 @@
             </div>
         </section>
     </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script src="./assets/scripts/config.js"></script>
 
