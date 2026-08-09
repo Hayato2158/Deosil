@@ -7,7 +7,13 @@
     const errEl = document.getElementById("loginError");
 
     // すでにログイン済みなら Home へ
-    const already = await window.App.getAuthedUser();
+    let already = null;
+    try {
+        already = await window.App.getAuthedUser();
+    } catch (error) {
+        console.warn("Authentication status check failed", error);
+        errEl.textContent = "ログイン状態を確認できませんでした。必要であれば再度ログインしてください。";
+    }
     if (already) {
         location.href = "./home.html"; // home.html にしたいならここを変更
         return;

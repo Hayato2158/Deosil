@@ -128,7 +128,22 @@
     // 認証ガード（sb.js の getAuthedUser に依存）
     window.App.requireLogin = async function requireLogin() {
         if (!window.App.getAuthedUser) throw new Error("getAuthedUser is not defined. Did you load sb.js?");
-        const user = await window.App.getAuthedUser();
+        let user;
+        try {
+            user = await window.App.getAuthedUser();
+        } catch (error) {
+            console.warn("Authentication status check failed", error);
+            let message = document.getElementById("authStatusError");
+            if (!message) {
+                message = document.createElement("p");
+                message.id = "authStatusError";
+                message.className = "authStatusError";
+                message.setAttribute("role", "alert");
+                document.body.prepend(message);
+            }
+            message.textContent = "ログイン状態を確認できませんでした。通信状態を確認して再読み込みしてください。";
+            return null;
+        }
 
         if (!user) {
             const isLoginPage = location.pathname.endsWith("/login.html");

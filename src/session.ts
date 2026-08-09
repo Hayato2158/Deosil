@@ -8,6 +8,8 @@ const IDLE_LIFETIME_SECONDS = 12 * 60 * 60;
 const ABSOLUTE_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
 const REFRESH_EARLY_SECONDS = 90;
 const REFRESH_LOCK_SECONDS = 10;
+const REFRESH_POLL_INTERVAL_MS = 200;
+const REFRESH_WAIT_GRACE_MS = 500;
 
 function nowSeconds(): number {
   return Math.floor(Date.now() / 1000);
@@ -79,17 +81,34 @@ async function waitForConcurrentRefresh(
   env: Env,
   sessionIdHash: string,
   oldRefreshToken: string,
-): Promise<SupabaseSession | null> {
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
+): Promise<
+  | { kind: "refreshed"; session: SupabaseSession }
+  | { kind: "retry"; row: SessionRow; session: SupabaseSession }
+  | { kind: "missing" }
+  | { kind: "timeout" }
+> {
+  let waitDeadlineMs = Date.now() + REFRESH_LOCK_SECONDS * 1000 + REFRESH_WAIT_GRACE_MS;
+
+  while (Date.now() <= waitDeadlineMs) {
     const row = await getRow(env, sessionIdHash);
-    if (!row) return null;
+    if (!row) return { kind: "missing" };
+
     const session = await decryptJson<SupabaseSession>(row.encrypted_session, env.SESSION_ENCRYPTION_KEY);
     if (session.refresh_token !== oldRefreshToken || session.expires_at > nowSeconds() + REFRESH_EARLY_SECONDS) {
-      return session;
+      return { kind: "refreshed", session };
     }
+
+    const lockExpiresAtMs = (row.refresh_lock_expires_at ?? 0) * 1000;
+    if (!row.refresh_lock || lockExpiresAtMs <= Date.now()) {
+      return { kind: "retry", row, session };
+    }
+
+    waitDeadlineMs = Math.max(waitDeadlineMs, lockExpiresAtMs + REFRESH_WAIT_GRACE_MS);
+    const remainingMs = Math.max(1, lockExpiresAtMs - Date.now());
+    await new Promise((resolve) => setTimeout(resolve, Math.min(REFRESH_POLL_INTERVAL_MS, remainingMs)));
   }
-  return null;
+
+  return { kind: "timeout" };
 }
 
 async function refreshIfNeeded(
@@ -97,50 +116,69 @@ async function refreshIfNeeded(
   row: SessionRow,
   session: SupabaseSession,
 ): Promise<SupabaseSession> {
-  const now = nowSeconds();
-  if (session.expires_at > now + REFRESH_EARLY_SECONDS) return session;
+  let currentRow = row;
+  let currentSession = session;
 
-  const lock = createOpaqueSessionId();
-  const lockResult = await env.SESSION_DB.prepare(
-    `update bff_sessions
-       set refresh_lock = ?1, refresh_lock_expires_at = ?2
-     where session_id_hash = ?3
-       and (refresh_lock is null or refresh_lock_expires_at < ?4)`,
-  ).bind(lock, now + REFRESH_LOCK_SECONDS, row.session_id_hash, now).run();
+  for (let lockAttempt = 0; lockAttempt < 2; lockAttempt += 1) {
+    const now = nowSeconds();
+    if (currentSession.expires_at > now + REFRESH_EARLY_SECONDS) return currentSession;
 
-  if ((lockResult.meta.changes ?? 0) !== 1) {
-    const refreshed = await waitForConcurrentRefresh(env, row.session_id_hash, session.refresh_token);
-    if (refreshed) return refreshed;
-    throw new HttpError(503, "セッション更新が競合しました。もう一度お試しください。");
-  }
-
-  try {
-    const refreshed = await refreshSupabaseSession(env, session.refresh_token);
-    const encrypted = await encryptJson(refreshed, env.SESSION_ENCRYPTION_KEY);
-    const updateResult = await env.SESSION_DB.prepare(
+    const lock = createOpaqueSessionId();
+    const lockResult = await env.SESSION_DB.prepare(
       `update bff_sessions
-         set user_id = ?1, encrypted_session = ?2, access_token_expires_at = ?3,
-             refresh_lock = null, refresh_lock_expires_at = null, updated_at = ?4
-       where session_id_hash = ?5 and refresh_lock = ?6`,
-    ).bind(
-      refreshed.user.id,
-      encrypted,
-      refreshed.expires_at,
-      nowSeconds(),
-      row.session_id_hash,
-      lock,
-    ).run();
-    if ((updateResult.meta.changes ?? 0) !== 1) {
-      throw new HttpError(401, "セッションが無効です。", true);
+         set refresh_lock = ?1, refresh_lock_expires_at = ?2
+       where session_id_hash = ?3
+         and (refresh_lock is null or refresh_lock_expires_at <= ?4)`,
+    ).bind(lock, now + REFRESH_LOCK_SECONDS, currentRow.session_id_hash, now).run();
+
+    if ((lockResult.meta.changes ?? 0) !== 1) {
+      const concurrent = await waitForConcurrentRefresh(
+        env,
+        currentRow.session_id_hash,
+        currentSession.refresh_token,
+      );
+      if (concurrent.kind === "refreshed") return concurrent.session;
+      if (concurrent.kind === "missing") {
+        throw new HttpError(401, "セッションが見つかりません。", true);
+      }
+      if (concurrent.kind === "retry") {
+        currentRow = concurrent.row;
+        currentSession = concurrent.session;
+        continue;
+      }
+      throw new HttpError(503, "セッション更新が競合しました。もう一度お試しください。");
     }
-    return refreshed;
-  } catch (error) {
-    await env.SESSION_DB.prepare(
-      "update bff_sessions set refresh_lock = null, refresh_lock_expires_at = null where session_id_hash = ?1 and refresh_lock = ?2",
-    ).bind(row.session_id_hash, lock).run();
-    if (error instanceof HttpError && error.clearSession) await deleteRow(env, row.session_id_hash);
-    throw error;
+
+    try {
+      const refreshed = await refreshSupabaseSession(env, currentSession.refresh_token);
+      const encrypted = await encryptJson(refreshed, env.SESSION_ENCRYPTION_KEY);
+      const updateResult = await env.SESSION_DB.prepare(
+        `update bff_sessions
+           set user_id = ?1, encrypted_session = ?2, access_token_expires_at = ?3,
+               refresh_lock = null, refresh_lock_expires_at = null, updated_at = ?4
+         where session_id_hash = ?5 and refresh_lock = ?6`,
+      ).bind(
+        refreshed.user.id,
+        encrypted,
+        refreshed.expires_at,
+        nowSeconds(),
+        currentRow.session_id_hash,
+        lock,
+      ).run();
+      if ((updateResult.meta.changes ?? 0) !== 1) {
+        throw new HttpError(401, "セッションが無効です。", true);
+      }
+      return refreshed;
+    } catch (error) {
+      await env.SESSION_DB.prepare(
+        "update bff_sessions set refresh_lock = null, refresh_lock_expires_at = null where session_id_hash = ?1 and refresh_lock = ?2",
+      ).bind(currentRow.session_id_hash, lock).run();
+      if (error instanceof HttpError && error.clearSession) await deleteRow(env, currentRow.session_id_hash);
+      throw error;
+    }
   }
+
+  throw new HttpError(503, "セッション更新が競合しました。もう一度お試しください。");
 }
 
 export async function authenticate(request: Request, env: Env): Promise<AuthContext> {

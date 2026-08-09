@@ -34,9 +34,12 @@
             const data = await apiFetch("./api/auth/me");
             return data?.user ?? null;
         } catch (error) {
-            if (error?.status !== 401) console.warn("[auth] me failed:", error);
-            window.App.userId = null;
-            return null;
+            if (error?.status === 401) {
+                window.App.userId = null;
+                return null;
+            }
+            console.warn("[auth] me failed:", error);
+            throw error;
         }
     };
 

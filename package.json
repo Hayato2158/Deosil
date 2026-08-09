@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "check": "tsc --noEmit && node scripts/verify-static.mjs && node scripts/test-entry.mjs",
+    "test": "node scripts/test-auth-client.mjs && node scripts/run-backend-tests.mjs",
+    "check": "tsc --noEmit && node scripts/verify-static.mjs && node scripts/test-entry.mjs && npm test",
     "dev": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "d1:migrate:local": "wrangler d1 migrations apply deosil-sessions --local",

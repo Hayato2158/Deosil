@@ -918,3 +918,16 @@ td:nth-child(3) .timeCell {
     padding-left: 10px;
   }
 }
+/* Authentication status failures stay on the current page instead of looking logged out. */
+.authStatusError {
+  box-sizing: border-box;
+  width: min(calc(100% - 32px), 720px);
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.6;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+}

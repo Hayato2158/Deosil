@@ -123,8 +123,27 @@ async function me(request: Request, env: Env): Promise<Response> {
 async function logout(request: Request, env: Env): Promise<Response> {
   requireSameOrigin(request);
   const auth = await authenticate(request, env);
-  await signOutSupabaseSession(env, auth.session.access_token);
-  await destroyBffSession(env, auth.sessionIdHash);
+
+  try {
+    await signOutSupabaseSession(env, auth.session.access_token);
+  } catch (error) {
+    console.warn(
+      "Supabase sign-out failed; continuing local session destruction",
+      error instanceof HttpError ? error.status : "network_error",
+    );
+  }
+
+  try {
+    await destroyBffSession(env, auth.sessionIdHash);
+  } catch (error) {
+    console.error("BFF session destruction failed during logout", error instanceof Error ? error.message : "unknown");
+    return json(
+      { error: "サーバー側セッションの破棄に失敗しました。" },
+      503,
+      { "Set-Cookie": clearSessionCookie() },
+    );
+  }
+
   return noContent({ "Set-Cookie": clearSessionCookie() });
 }
 
