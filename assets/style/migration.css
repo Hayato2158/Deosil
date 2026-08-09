@@ -49,17 +49,13 @@
 }
 
 .migrationMark {
-    display: grid;
+    display: block;
     width: 64px;
     height: 64px;
     margin: 0 auto 22px;
-    color: #fff;
-    font-size: 30px;
-    font-weight: 800;
-    background: linear-gradient(145deg, #2563eb, #0ea5e9);
+    object-fit: cover;
     border-radius: 18px;
     box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28);
-    place-items: center;
 }
 
 .migrationCard h1 {
