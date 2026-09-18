@@ -508,6 +508,35 @@ td:nth-child(3) .timeCell {
   outline: 3px solid rgba(37, 99, 235, 0.15);
 }
 
+.leaveLongTermOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.leaveLongTermOption input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.leaveLongTermOption input:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.2);
+  outline-offset: 2px;
+}
+
+.leaveDateFields[hidden],
+.formField[hidden] {
+  display: none;
+}
+
 .formError {
   min-height: 1.2em;
   margin: 12px 0 0;

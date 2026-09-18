@@ -141,10 +141,24 @@
         <div class="dialogCard entryDialogCard">
             <h3 id="leaveEntryDialogTitle">休暇データを追加</h3>
             <form id="leaveEntryForm">
-                <label class="formField">
+                <label class="leaveLongTermOption">
+                    <input id="leaveLongTerm" type="checkbox" aria-controls="leaveSingleDateField leaveRangeFields" />
+                    <span>長期休暇を入力</span>
+                </label>
+                <label id="leaveSingleDateField" class="formField">
                     <span>日付</span>
                     <input id="leaveWorkDate" type="date" required />
                 </label>
+                <div id="leaveRangeFields" class="leaveDateFields" hidden>
+                    <label class="formField">
+                        <span>開始日</span>
+                        <input id="leaveStartDate" type="date" />
+                    </label>
+                    <label class="formField">
+                        <span>終了日</span>
+                        <input id="leaveEndDate" type="date" />
+                    </label>
+                </div>
                 <p id="leaveEntryError" class="formError" role="alert"></p>
                 <div class="dialogActions entryActions">
                     <button class="btn primary" id="leaveEntrySave" type="submit">保存</button>
@@ -277,6 +291,7 @@
     <script src="./assets/scripts/core.js"></script>
     <script src="./assets/scripts/idb.js"></script>
     <script src="./assets/scripts/sb.js"></script>
+    <script src="./assets/scripts/date-range.js"></script>
 
     <script src="./assets/scripts/data.js"></script>
     <script src="./assets/scripts/dialog.js"></script>

@@ -32,7 +32,12 @@
     const entryCancel = document.getElementById("entryCancel");
     const leaveEntryDialog = document.getElementById("leaveEntryDialog");
     const leaveEntryForm = document.getElementById("leaveEntryForm");
+    const leaveLongTerm = document.getElementById("leaveLongTerm");
+    const leaveSingleDateField = document.getElementById("leaveSingleDateField");
     const leaveWorkDate = document.getElementById("leaveWorkDate");
+    const leaveRangeFields = document.getElementById("leaveRangeFields");
+    const leaveStartDate = document.getElementById("leaveStartDate");
+    const leaveEndDate = document.getElementById("leaveEndDate");
     const leaveEntryError = document.getElementById("leaveEntryError");
     const leaveEntrySave = document.getElementById("leaveEntrySave");
     const leaveEntryCancel = document.getElementById("leaveEntryCancel");
@@ -174,10 +179,23 @@
         showEntryError();
     }
 
+    function setLongLeaveMode(enabled) {
+        if (leaveLongTerm) leaveLongTerm.checked = enabled;
+        if (leaveSingleDateField) leaveSingleDateField.hidden = enabled;
+        if (leaveRangeFields) leaveRangeFields.hidden = !enabled;
+        if (leaveWorkDate) leaveWorkDate.required = !enabled;
+        if (leaveStartDate) leaveStartDate.required = enabled;
+        if (leaveEndDate) leaveEndDate.required = enabled;
+        showLeaveEntryError();
+    }
+
     function openLeaveEntryDialog() {
         if (!leaveEntryDialog || !leaveWorkDate) return;
         closeEntryTypeDialog();
+        setLongLeaveMode(false);
         leaveWorkDate.value = window.App.formatDate(new Date());
+        if (leaveStartDate) leaveStartDate.value = "";
+        if (leaveEndDate) leaveEndDate.value = "";
         showLeaveEntryError();
         leaveEntryDialog.classList.remove("hidden");
         leaveWorkDate.focus();
@@ -301,6 +319,13 @@
         };
     }
 
+    function readLongLeaveDates() {
+        return {
+            startDate: leaveStartDate?.value || "",
+            endDate: leaveEndDate?.value || "",
+        };
+    }
+
     function setSaving(value) {
         isSaving = value;
         if (entrySave) entrySave.disabled = value;
@@ -345,6 +370,51 @@
                 entryDialog?.classList.remove("hidden");
                 showEntryError(message);
             }
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function saveLongLeaveEntries(workDates) {
+        if (isSaving || workDates.length === 0) return;
+        setSaving(true);
+
+        let savedCount = 0;
+        try {
+            const existingSessions = await Promise.all(
+                workDates.map((workDate) => window.App.getSessionByDate(workDate))
+            );
+            const conflicts = existingSessions.filter((session) => session && !isLeaveSession(session));
+            if (conflicts.length > 0) {
+                const conflictDates = conflicts.map((session) => session.workDate).join("、");
+                throw new Error(`次の日付には出勤データがあるため登録できません：${conflictDates}`);
+            }
+
+            for (let index = 0; index < workDates.length; index += 1) {
+                if (existingSessions[index]) continue;
+
+                const result = await window.App.saveSession({
+                    userId: window.App.userId,
+                    workDate: workDates[index],
+                    startAt: null,
+                    endAt: null,
+                    state: "DONE",
+                });
+                if (!result?.ok) {
+                    throw new Error(`${workDates[index]}の保存に失敗しました：${result?.message || "保存に失敗しました"}`);
+                }
+                savedCount += 1;
+            }
+
+            const [year, month] = workDates[0].split("-").map(Number);
+            currentYear = year;
+            currentMonth = month;
+            closeLeaveEntryDialog();
+            await renderMonth(currentYear, currentMonth);
+        } catch (error) {
+            console.error("Failed to save long leave sessions", error);
+            const partialMessage = savedCount > 0 ? `${savedCount}日分は保存済みです。` : "";
+            showLeaveEntryError(`${partialMessage}${error?.message || "保存に失敗しました"}`);
         } finally {
             setSaving(false);
         }
@@ -535,6 +605,11 @@
     entryTypeCancel?.addEventListener("click", closeEntryTypeDialog);
     entryCancel?.addEventListener("click", closeEntryDialog);
     leaveEntryCancel?.addEventListener("click", closeLeaveEntryDialog);
+    leaveLongTerm?.addEventListener("change", () => {
+        setLongLeaveMode(Boolean(leaveLongTerm.checked));
+        if (leaveLongTerm.checked) leaveStartDate?.focus();
+        else leaveWorkDate?.focus();
+    });
 
     entryForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -569,6 +644,23 @@
         if (isSaving || !leaveEntryForm.reportValidity()) return;
 
         showLeaveEntryError();
+        if (leaveLongTerm?.checked) {
+            const { startDate, endDate } = readLongLeaveDates();
+            if (!startDate || !endDate) {
+                showLeaveEntryError("開始日と終了日を入力してください");
+                return;
+            }
+
+            const workDates = window.App.enumerateDateRange(startDate, endDate);
+            if (workDates.length === 0) {
+                showLeaveEntryError("終了日は開始日以降にしてください");
+                return;
+            }
+
+            await saveLongLeaveEntries(workDates);
+            return;
+        }
+
         const values = readLeaveEntryValues();
         if (!values.workDate) {
             showLeaveEntryError("日付を入力してください");
