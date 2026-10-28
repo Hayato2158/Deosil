@@ -32,12 +32,6 @@
         return 60;
     }
 
-    function uuid() {
-        return crypto?.randomUUID
-            ? crypto.randomUUID()
-            : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    }
-
     function normalizeBasePath(path) {
         if (!path) return "";
         let normalized = String(path);
@@ -90,7 +84,6 @@
     window.App = window.App || {};
 
     // 状態
-    window.App.db = window.App.db ?? null;
     window.App.userId = window.App.userId ?? null;
     window.App.basePath = window.App.basePath ?? "";
 
@@ -99,28 +92,10 @@
     window.App.formatTime = formatTime;
     window.App.formatHM = formatHM;
     window.App.calcWorkAndDiff = calcWorkAndDiff;
-    window.App.uuid = uuid;
 
     // init（home.js / data.js / login.js から呼ぶ）
     window.App.init = async function init() {
         window.App.basePath = applyBasePath();
-
-        // 旧GitHub Pages版が保存したSupabaseセッションを移行時に確実に破棄する。
-        try {
-            const legacyPrefix = "sb-bllysyzdusuregqlraoi-auth-token";
-            for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-                const key = localStorage.key(index);
-                if (key?.startsWith(legacyPrefix)) localStorage.removeItem(key);
-            }
-        } catch (error) {
-            console.warn("Legacy auth storage cleanup failed", error);
-        }
-
-        // IndexedDB 初期化（idb.js が提供）
-        if (!window.App.db) {
-            if (!window.App.openDb) throw new Error("openDb is not defined. Did you load idb.js before core.js?");
-            window.App.db = await window.App.openDb();
-        }
 
         await registerServiceWorker();
     };
