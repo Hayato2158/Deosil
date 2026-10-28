@@ -8,15 +8,17 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:dev": "node scripts/build.mjs --no-minify",
     "test": "node scripts/test-auth-client.mjs && node scripts/run-backend-tests.mjs",
     "check": "tsc --noEmit && node scripts/verify-static.mjs && node scripts/test-date-range.mjs && npm test",
-    "dev": "npm run build && wrangler dev",
+    "dev": "npm run build:dev && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "d1:migrate:local": "wrangler d1 migrations apply deosil-sessions --local",
     "d1:migrate:remote": "wrangler d1 migrations apply deosil-sessions --remote"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261024.1",
+    "esbuild": "0.28.2",
     "typescript": "7.0.2",
     "wrangler": "4.152.0"
   }
